@@ -2,13 +2,13 @@
 
 <img src="Assets/icon.png" width="80" alt="GLauncher"/>
 
-# 🚀 GLauncher v2.10.3
+# 🚀 GLauncher v2.11.0
 
 ### Launcher de jogos estilo PS5 para PC
 
-[![Download GLauncher v2.10.3](https://img.shields.io/badge/⬇_DOWNLOAD_v2.10.3-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GameLauncher/releases/latest)
+[![Download GLauncher v2.11.0](https://img.shields.io/badge/⬇_DOWNLOAD_v2.11.0-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GameLauncher/releases/latest)
 
-> Baixe e execute o instalador `GLauncher_Setup_v2.10.3.exe`.
+> Baixe e execute o instalador `GLauncher_Setup_v2.11.0.exe`.
 >
 > Requer **Windows 10/11 (x64)** • [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 
@@ -16,29 +16,23 @@
 
 ---
 
-## 🆕 Novidades da versão 2.10.3
+## 🆕 Novidades da versão 2.11.0
 
-Esta versão consolida os ajustes realizados nos cinco commits anteriores e prioriza estabilidade, navegação por controle, documentação e distribuição.
+Esta versão adiciona um assistente de IA configurável e aprimora a experiência Big Picture, além de consolidar melhorias de estabilidade e distribuição.
 
-### Resumo dos últimos cinco commits
+### Assistente de IA
 
-- `d55fa89` — Versão 2.10.0: sincronização do aplicativo, README, release notes, metadados e instalador; publicação self-contained `win-x64`; ícone oficial; visual padrão do Inno Setup; correção de encoding.
-- `a64cefa` — Versão 2.9.9: consolidação da versão anterior, documentação e pacote de distribuição.
-- `331c42c` — Versão 2.9.8: atualização dos metadados de release, documentação e empacotamento `win-x64`.
-- `361e0ad` — Ajustes do instalador: script Inno Setup, atalhos, permissões, compressão e identificação do aplicativo.
-- `bd1e316` — Versão 2.9.7: atualização da versão distribuída e sincronização inicial da documentação com o instalador.
+- Seleção de provedor entre Groq, OpenAI e Gemini.
+- Configuração das chaves de API pelo usuário, protegidas localmente com DPAPI.
+- Assistente contextualizado para ajudar com o jogo selecionado, priorizando dicas de progressão e evitando spoilers desnecessários.
+- Mensagens de erro mais claras para problemas de chave, cota, modelo e conexão.
 
-### Ajustes da versão 2.10.3
+### Big Picture e distribuição
 
-- Correção completa de caracteres inválidos e textos com encoding incorreto.
-- Correção dos textos de navegação e conexão dos controles Xbox e PlayStation.
-- Revisão das mensagens de áudio, navegação, seleção, ações e menus.
-- Correção das mensagens de status do Xbox, Steam, Epic e IGDB.
-- Revisão dos scripts de verificação e correção de encoding.
-- Inicialização do launcher movida para não aguardar hardware/serviços online antes da janela abrir.
-- Adicionada opção para limpar todos os jogos da biblioteca, com confirmação.
-- README e release notes atualizados para `2.10.3`.
-- Instalador atualizado para gerar `GLauncher_Setup_v2.10.3.exe`.
+- Layout Big Picture refinado com capa, detalhes, screenshots, carrossel e comandos de controle melhor alinhados.
+- Transições de entrada e saída do Big Picture aprimoradas.
+- Configurações, documentação e instalador sincronizados com a versão `2.11.0`.
+- Instalador self-contained para `win-x64`.
 - Build `.NET 8` validado com sucesso.
 
 ---

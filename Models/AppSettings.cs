@@ -28,6 +28,8 @@ public class AppSettings
     public bool FpsOverlayEnabled      { get; set; } = false;
     public string OpenAiApiKey         { get; set; } = SecretsService.OpenAiApiKey;
     public string GroqApiKey           { get; set; } = SecretsService.GroqApiKey;
+    public string GeminiApiKey         { get; set; } = string.Empty;
+    public AiProvider? PreferredAiProvider { get; set; }
 
     public string AccentColor          { get; set; } = "#7C4DFF";
     public string SecondaryAccentColor { get; set; } = "#00E676";

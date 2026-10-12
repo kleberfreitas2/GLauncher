@@ -25,6 +25,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
         "GameLauncher", "games.json");
 
     private readonly ICollectionView _gamesView;
+    private readonly ListCollectionView _bigPictureGamesView;
     private HardwareMonitorService? _hwMonitor;
     private XInputService _xinput = null!;
     public  XInputService XInput => _xinput;
@@ -79,6 +80,12 @@ public partial class MainViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(BigPictureIcon))]
     private bool isBigPictureMode;
 
+    [ObservableProperty]
+    private string bigPictureCollection = "Todos os jogos";
+
+    [ObservableProperty]
+    private bool isBigPictureDetailsOpen;
+
     public string BigPictureIcon => IsBigPictureMode ? "Television" : "TelevisionClassic";
 
     /// <summary>
@@ -99,14 +106,19 @@ public partial class MainViewModel : ObservableObject, IDisposable
 
         if (entering)
         {
-            // Ao entrar no Big Picture, garantir que o foco está no carrossel com um jogo selecionado
+            IsBigPictureDetailsOpen = false;
             ActiveZone = NavZone.Carousel;
-            var visible = GetVisibleGames();
-            if (visible.Count > 0 && SelectedGame is null)
+            var visible = _bigPictureGamesView.Cast<Game>().ToList();
+            if (visible.Count > 0 && (SelectedGame is null || !visible.Contains(SelectedGame)))
             {
                 _selectedIndex = 0;
                 SelectedGame = visible[0];
             }
+        else if (visible.Count == 0)
+        {
+            _selectedIndex = -1;
+            SelectedGame = null;
+        }
             else if (SelectedGame is not null)
             {
                 _selectedIndex = visible.IndexOf(SelectedGame);
@@ -116,6 +128,73 @@ public partial class MainViewModel : ObservableObject, IDisposable
         }
 
         BigPictureTransitionRequested?.Invoke(entering);
+    }
+
+    partial void OnBigPictureCollectionChanged(string value)
+    {
+        _bigPictureGamesView.SortDescriptions.Clear();
+        if (value == "Continuar jogando")
+        {
+            _bigPictureGamesView.CustomSort =
+                Comparer<Game>.Create((left, right) => Nullable.Compare(right.LastPlayed, left.LastPlayed));
+        }
+        else
+        {
+            _bigPictureGamesView.CustomSort = null;
+            _bigPictureGamesView.SortDescriptions.Add(
+                new SortDescription(nameof(Game.SortOrder), ListSortDirection.Ascending));
+        }
+
+        _bigPictureGamesView.Refresh();
+        var visible = _bigPictureGamesView.Cast<Game>().ToList();
+        if (visible.Count > 0 && (SelectedGame is null || !visible.Contains(SelectedGame)))
+        {
+            _selectedIndex = 0;
+            SelectedGame = visible[0];
+        }
+        else if (visible.Count == 0)
+        {
+            _selectedIndex = -1;
+            SelectedGame = null;
+        }
+    }
+
+    private bool FilterBigPictureGames(object item) => item is Game game && BigPictureCollection switch
+    {
+        "Continuar jogando" => game.LastPlayed.HasValue,
+        "Favoritos" => game.IsFavorite,
+        _ => true
+    };
+
+    public void CycleBigPictureCollection(int direction)
+    {
+        string[] collections = ["Continuar jogando", "Favoritos", "Todos os jogos"];
+        var index = Array.IndexOf(collections, BigPictureCollection);
+        BigPictureCollection = collections[(index + direction + collections.Length) % collections.Length];
+        SoundService.PlayZoneChange();
+    }
+
+    [RelayCommand]
+    private void SetBigPictureCollection(string collection)
+    {
+        if (collection is "Continuar jogando" or "Favoritos" or "Todos os jogos")
+            BigPictureCollection = collection;
+    }
+
+    [RelayCommand]
+    private void ToggleBigPictureDetails() => IsBigPictureDetailsOpen = !IsBigPictureDetailsOpen;
+
+    private void NavigateBigPictureGames(int direction)
+    {
+        var visible = _bigPictureGamesView.Cast<Game>().ToList();
+        if (visible.Count == 0)
+            return;
+
+        var index = SelectedGame is null ? 0 : visible.IndexOf(SelectedGame);
+        index = Math.Clamp(index + direction, 0, visible.Count - 1);
+        _selectedIndex = index;
+        SelectedGame = visible[index];
+        SoundService.PlayNavigate();
     }
 
     private GpuCapabilities? _gpuCaps;
@@ -261,6 +340,7 @@ public partial class MainViewModel : ObservableObject, IDisposable
 private readonly DispatcherTimer _clockTimer;
 
     public ICollectionView GamesView => _gamesView;
+    public ICollectionView BigPictureGamesView => _bigPictureGamesView;
 
     public MainViewModel()
     {
@@ -285,6 +365,12 @@ private readonly DispatcherTimer _clockTimer;
              g.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
 
         _gamesView.SortDescriptions.Add(new SortDescription(nameof(Game.SortOrder), ListSortDirection.Ascending));
+
+        _bigPictureGamesView = new ListCollectionView(Games)
+        {
+            Filter = FilterBigPictureGames
+        };
+        _bigPictureGamesView.SortDescriptions.Add(new SortDescription(nameof(Game.SortOrder), ListSortDirection.Ascending));
 
         _clockTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(15) };
         _clockTimer.Tick += (_, _) => CurrentTime = DateTime.Now.ToString("H:mm");
@@ -1229,6 +1315,7 @@ private readonly DispatcherTimer _clockTimer;
                 launcherWindow.Hide();
 
             game.LastPlayed = DateTime.Now;
+            _bigPictureGamesView.Refresh();
             SaveGames();
             StatusMessage = $"Iniciando {game.DisplayName}...";
 
@@ -1322,6 +1409,7 @@ private readonly DispatcherTimer _clockTimer;
         game.IsFavorite = !game.IsFavorite;
         SoundService.PlayFavorite();
         _gamesView.Refresh();
+        _bigPictureGamesView.Refresh();
         SaveGames();
         if (game.IsFavorite) _trophyService.OnFavoriteAdded();
         StatusMessage = game.IsFavorite
@@ -1479,46 +1567,24 @@ private readonly DispatcherTimer _clockTimer;
 
     private void OpenAiAssistantCore(bool viaGamepad, bool fromLauncher = false)
     {
-        // Prioridade: Groq (gratis) - OpenAI (pago)
-        var environmentGroqKey = Environment.GetEnvironmentVariable("GROQ_API_KEY");
-        var groqKey   = !string.IsNullOrWhiteSpace(environmentGroqKey)
-            ? environmentGroqKey.Trim()
-            : !string.IsNullOrWhiteSpace(SecretsService.GroqApiKey)
-                ? SecretsService.GroqApiKey
-                : SettingsService.Current.GroqApiKey;
-        var openAiKey = SettingsService.Current.OpenAiApiKey;
-
-        AiProvider provider;
-        string apiKey;
-
-        if (!string.IsNullOrWhiteSpace(groqKey))
+        var provider = SettingsService.Current.PreferredAiProvider
+            ?? (!string.IsNullOrWhiteSpace(GetAiApiKey(AiProvider.Groq)) ? AiProvider.Groq
+                : !string.IsNullOrWhiteSpace(GetAiApiKey(AiProvider.OpenAI)) ? AiProvider.OpenAI : AiProvider.Gemini);
+        var apiKey = GetAiApiKey(provider);
+        if (string.IsNullOrWhiteSpace(apiKey))
         {
-            provider = AiProvider.Groq;
-            apiKey   = groqKey;
-        }
-        else if (!string.IsNullOrWhiteSpace(openAiKey))
-        {
-            provider = AiProvider.OpenAI;
-            apiKey   = openAiKey;
-        }
-        else
-        {
-            var dlg = new GroqKeyDialog { Owner = Application.Current.MainWindow };
+            var dlg = new AiSettingsDialog { Owner = Application.Current.MainWindow };
             if (dlg.ShowDialog() != true) return;
-            SettingsService.Current.GroqApiKey = dlg.ApiKey;
-            SettingsService.Save();
-            provider = AiProvider.Groq;
-            apiKey   = dlg.ApiKey;
+            provider = SettingsService.Current.PreferredAiProvider ?? AiProvider.Gemini;
+            apiKey = GetAiApiKey(provider);
         }
 
-        // Quando aberto pelo launcher: chat geral (sem jogo em foco).
-        // Quando aberto por hotkey/controle durante o jogo: focado no jogo em execução.
-        string? gameName = fromLauncher ? null : _runningGameName;
+        string? gameName = fromLauncher ? SelectedGame?.DisplayName : _runningGameName ?? SelectedGame?.DisplayName;
         var gameWindowHandle = fromLauncher ? IntPtr.Zero : FindRunningGameWindow();
 
         var chatDialog = new AiAssistantDialog(
             provider, apiKey, gameName, viaGamepad, _xinput,
-            gameWindowHandle, _runningGameExecutablePath)
+            gameWindowHandle, fromLauncher ? null : _runningGameExecutablePath)
         {
             Owner = viaGamepad ? null : Application.Current.MainWindow,
             Topmost = true,
@@ -1530,6 +1596,27 @@ private readonly DispatcherTimer _clockTimer;
         };
         chatDialog.Show();
         _trophyService.OnAiUsed();
+    }
+
+    [RelayCommand]
+    private void ConfigureAi()
+    {
+        var dialog = new AiSettingsDialog { Owner = Application.Current.MainWindow };
+        dialog.ShowDialog();
+    }
+
+    private static string GetAiApiKey(AiProvider provider)
+    {
+        var settings = SettingsService.Current;
+        if (provider == AiProvider.Gemini)
+            return settings.GeminiApiKey;
+        if (provider == AiProvider.OpenAI)
+            return settings.OpenAiApiKey == AppSettings.DefaultOpenAiApiKey ? "" : settings.OpenAiApiKey;
+        if (provider != AiProvider.Groq)
+            return "";
+        if (!string.IsNullOrWhiteSpace(settings.GroqApiKey) && !SecretsService.IsLegacyGroqApiKey(settings.GroqApiKey))
+            return settings.GroqApiKey;
+        return Environment.GetEnvironmentVariable("GROQ_API_KEY")?.Trim() ?? "";
     }
 
     private IntPtr FindRunningGameWindow()
@@ -2305,6 +2392,12 @@ private readonly DispatcherTimer _clockTimer;
                 return;
             }
 
+            if (IsBigPictureMode)
+            {
+                HandleBigPictureGamepadInput(button);
+                return;
+            }
+
             switch (button)
             {
                 case GamepadButton.DPadUp:
@@ -2390,6 +2483,57 @@ private readonly DispatcherTimer _clockTimer;
                     return;
             }
         });
+    }
+
+    private void HandleBigPictureGamepadInput(GamepadButton button)
+    {
+        switch (button)
+        {
+            case GamepadButton.DPadLeft:
+                NavigateBigPictureGames(-1);
+                break;
+            case GamepadButton.DPadRight:
+                NavigateBigPictureGames(1);
+                break;
+            case GamepadButton.DPadUp:
+                IsBigPictureDetailsOpen = true;
+                SoundService.PlayNavigate();
+                break;
+            case GamepadButton.DPadDown:
+                IsBigPictureDetailsOpen = false;
+                SoundService.PlayNavigate();
+                break;
+            case GamepadButton.LeftShoulder:
+                CycleBigPictureCollection(-1);
+                break;
+            case GamepadButton.RightShoulder:
+                CycleBigPictureCollection(1);
+                break;
+            case GamepadButton.A:
+                if (SelectedGame is not null)
+                {
+                    SoundService.PlaySelect();
+                    LaunchGame(SelectedGame);
+                }
+                break;
+            case GamepadButton.B:
+                if (IsBigPictureDetailsOpen)
+                    IsBigPictureDetailsOpen = false;
+                else
+                    ToggleBigPictureMode();
+                break;
+            case GamepadButton.X:
+                IsBigPictureDetailsOpen = !IsBigPictureDetailsOpen;
+                SoundService.PlaySelect();
+                break;
+            case GamepadButton.Y:
+                if (SelectedGame is not null)
+                    ToggleFavorite(SelectedGame);
+                break;
+            case GamepadButton.RightThumb:
+                ToggleBigPictureMode();
+                break;
+        }
     }
 
     private static void HandleDialogGamepadInput(Window dialog, GamepadButton button)

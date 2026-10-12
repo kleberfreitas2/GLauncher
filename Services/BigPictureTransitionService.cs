@@ -16,6 +16,8 @@ public sealed class BigPictureTransitionService
 {
     // ─── Referências aos elementos nomeados do XAML ──────────────────────────
     private readonly FrameworkElement _overlay;       // BpTransitionOverlay
+    private readonly FrameworkElement _introImage;
+    private readonly ScaleTransform _introImageScale;
     private readonly FrameworkElement _flash;         // BpFlash
     private readonly FrameworkElement _vignette;      // BpVignette
     private readonly FrameworkElement _logoContainer; // BpLogoContainer
@@ -36,6 +38,8 @@ public sealed class BigPictureTransitionService
     public BigPictureTransitionService(MainWindow window)
     {
         _overlay       = Get<FrameworkElement>(window, "BpTransitionOverlay");
+        _introImage    = Get<FrameworkElement>(window, "BpIntroImage");
+        _introImageScale = Get<ScaleTransform>(window, "BpIntroImageScale");
         _flash         = Get<FrameworkElement>(window, "BpFlash");
         _vignette      = Get<FrameworkElement>(window, "BpVignette");
         _logoContainer = Get<FrameworkElement>(window, "BpLogoContainer");
@@ -74,26 +78,45 @@ public sealed class BigPictureTransitionService
 
     private void RunEnterSequence(Action onComplete)
     {
-        // Fase 0: Flash branco (0ms)
-        AnimateFlash(fadeIn: true, delay: 0, duration: 0.18, then: () =>
+        AnimateFlash(fadeIn: true, delay: 0, duration: 0.16, then: () =>
 
-        // Fase 1: Flash desaparece + vinheta aparece (140ms)
-        AnimateFlash(fadeIn: false, delay: 0.14, duration: 0.30, then: () => { }));
-        AnimateVignette(fadeIn: true, delay: 0.10, duration: 0.45);
+        AnimateFlash(fadeIn: false, delay: 0.12, duration: 0.34, then: () => { }));
+        AnimateIntroImage(delay: 0.12, duration: 2.9);
+        AnimateVignette(fadeIn: true, delay: 0.12, duration: 0.8);
 
-        // Fase 2: Barras laterais deslizam (220ms)
-        AnimateBars(expand: true, delay: 0.22, duration: 0.38);
+        AnimateBars(expand: true, delay: 0.16, duration: 0.72);
 
-        // Fase 3: Logo surge com zoom (380ms)
-        AnimateLogo(enter: true, delay: 0.38, duration: 0.65);
-        AnimatePulse(delay: 0.70);
+        AnimateLogo(enter: true, delay: 0.55, duration: 0.85);
+        AnimatePulse(delay: 1.2);
 
-        // Fase 4: Hold visível + fade para o Big Picture (~2.0s total)
-        FadeOut(delay: 1.30, duration: 0.55, then: () =>
+        FadeOut(delay: 2.25, duration: 0.75, then: () =>
         {
             HideOverlay();
             onComplete();
         });
+    }
+
+    private void AnimateIntroImage(double delay, double duration)
+    {
+        _introImage.BeginAnimation(UIElement.OpacityProperty, Ease(new DoubleAnimation
+        {
+            From = 0,
+            To = 0.78,
+            Duration = Duration(duration),
+            BeginTime = TimeSpan.FromSeconds(delay),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        }));
+
+        var zoom = new DoubleAnimation
+        {
+            From = 1.08,
+            To = 1.0,
+            Duration = Duration(duration),
+            BeginTime = TimeSpan.FromSeconds(delay),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut }
+        };
+        _introImageScale.BeginAnimation(ScaleTransform.ScaleXProperty, zoom);
+        _introImageScale.BeginAnimation(ScaleTransform.ScaleYProperty, zoom);
     }
 
     private void RunExitSequence(Action onComplete)
@@ -208,12 +231,12 @@ public sealed class BigPictureTransitionService
 
     private void AnimateBars(bool expand, double delay, double duration)
     {
-        double targetW = expand ? 6 : 0;
+        double targetHeight = expand ? 54 : 0;
         var easing = new QuarticEase { EasingMode = EasingMode.EaseOut };
 
-        _barLeft.BeginAnimation(FrameworkElement.WidthProperty, new DoubleAnimation
+        _barLeft.BeginAnimation(FrameworkElement.HeightProperty, new DoubleAnimation
         {
-            From = expand ? 0 : 6, To = targetW,
+            From = expand ? 0 : 54, To = targetHeight,
             Duration  = Duration(duration),
             BeginTime = TimeSpan.FromSeconds(delay),
             EasingFunction = easing
@@ -225,9 +248,9 @@ public sealed class BigPictureTransitionService
             BeginTime = TimeSpan.FromSeconds(delay)
         });
 
-        _barRight.BeginAnimation(FrameworkElement.WidthProperty, new DoubleAnimation
+        _barRight.BeginAnimation(FrameworkElement.HeightProperty, new DoubleAnimation
         {
-            From = expand ? 0 : 6, To = targetW,
+            From = expand ? 0 : 54, To = targetHeight,
             Duration  = Duration(duration),
             BeginTime = TimeSpan.FromSeconds(delay),
             EasingFunction = easing
@@ -272,6 +295,7 @@ public sealed class BigPictureTransitionService
     private void ResetAll()
     {
         SetOpacity(_flash,         0);
+        SetOpacity(_introImage,    0);
         SetOpacity(_vignette,      0);
         SetOpacity(_logoContainer, 0);
         SetOpacity(_barLeft,       0);
@@ -279,9 +303,11 @@ public sealed class BigPictureTransitionService
         SetOpacity(_fadeOut,       0);
         _logoScale.ScaleX = 0.25;
         _logoScale.ScaleY = 0.25;
+        _introImageScale.ScaleX = 1.08;
+        _introImageScale.ScaleY = 1.08;
         _logoGlow.Opacity = 0;
-        _barLeft.SetCurrentValue(FrameworkElement.WidthProperty, 0d);
-        _barRight.SetCurrentValue(FrameworkElement.WidthProperty, 0d);
+        _barLeft.SetCurrentValue(FrameworkElement.HeightProperty, 0d);
+        _barRight.SetCurrentValue(FrameworkElement.HeightProperty, 0d);
     }
 
     private static void SetOpacity(FrameworkElement el, double value) =>

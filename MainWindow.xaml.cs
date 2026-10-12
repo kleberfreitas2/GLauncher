@@ -1072,6 +1072,25 @@ public partial class MainWindow : Window
         }
     }
 
+    private void BigPictureCarousel_SelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ListBox listBox && listBox.SelectedItem is not null)
+            listBox.ScrollIntoView(listBox.SelectedItem);
+    }
+
+    private void BigPictureCarousel_PreviewMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        if (sender is not ListBox listBox || listBox.Items.Count == 0 || e.Delta == 0)
+            return;
+
+        var index = listBox.SelectedIndex;
+        listBox.SelectedIndex = index < 0
+            ? 0
+            : Math.Clamp(index + (e.Delta < 0 ? 1 : -1), 0, listBox.Items.Count - 1);
+        listBox.ScrollIntoView(listBox.SelectedItem);
+        e.Handled = true;
+    }
+
     private void MainWindow_KeyDown(object sender, KeyEventArgs e)
     {
         if (e.Key == Key.F11)

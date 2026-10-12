@@ -5,11 +5,11 @@ using Microsoft.SemanticKernel.ChatCompletion;
 
 namespace GameLauncher.Services;
 
-public enum AiProvider { Groq, OpenAI }
+public enum AiProvider { Groq, OpenAI, Gemini }
 
 /// <summary>
 /// Assistente IA gamer usando Semantic Kernel.
-/// Suporta Groq (grátis) e OpenAI (pago). Groq não suporta visão.
+/// Suporta Groq, OpenAI e Gemini. O modelo Groq configurado usa apenas texto.
 /// </summary>
 public class AiAssistantService : IDisposable
 {
@@ -19,6 +19,9 @@ public class AiAssistantService : IDisposable
 
     // Endpoint compatível com OpenAI usado pelo Groq
     private static readonly Uri GroqEndpoint = new("https://api.groq.com/openai/v1");
+    private static readonly Uri GeminiEndpoint = new("https://generativelanguage.googleapis.com/v1beta/openai/");
+
+    public bool SupportsImages => _provider != AiProvider.Groq;
 
     public AiAssistantService(AiProvider provider, string apiKey, string? currentGameName = null)
     {
@@ -35,6 +38,13 @@ public class AiAssistantService : IDisposable
                 apiKey: apiKey,
                 endpoint: GroqEndpoint);
         }
+        else if (provider == AiProvider.Gemini)
+        {
+            builder.AddOpenAIChatCompletion(
+                modelId: "gemini-2.5-flash",
+                apiKey: apiKey,
+                endpoint: GeminiEndpoint);
+        }
         else
         {
             builder.AddOpenAIChatCompletion("gpt-4o", apiKey);
@@ -48,14 +58,15 @@ public class AiAssistantService : IDisposable
 
     /// <summary>
     /// Envia uma mensagem (com screenshot opcional) e retorna a resposta em streaming.
-    /// Análise de screenshot só está disponível com OpenAI (GPT-4o).
+    /// Análise de screenshot disponível com OpenAI e Gemini.
     /// </summary>
     public async IAsyncEnumerable<string> SendAsync(
         string userMessage,
         string? imageBase64 = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (imageBase64 is not null && _provider == AiProvider.OpenAI)
+        var historyCount = _history.Count;
+        if (imageBase64 is not null && SupportsImages)
         {
             var imageBytes = Convert.FromBase64String(imageBase64);
             var content = new ChatMessageContentItemCollection
@@ -68,32 +79,42 @@ public class AiAssistantService : IDisposable
         else
         {
             if (imageBase64 is not null)
-                _history.AddUserMessage($"[Screenshot enviado — análise de imagem não disponível no modo gratuito]\n{userMessage}");
+                _history.AddUserMessage($"[Screenshot não analisado: o modelo Groq configurado aceita apenas texto.]\n{userMessage}");
             else
                 _history.AddUserMessage(userMessage);
         }
 
         var fullResponse = new System.Text.StringBuilder();
 
-        await foreach (var chunk in _chat.GetStreamingChatMessageContentsAsync(
-            _history, cancellationToken: cancellationToken))
+        var completed = false;
+        try
         {
-            var token = chunk.Content ?? string.Empty;
-            if (!string.IsNullOrEmpty(token))
+            await foreach (var chunk in _chat.GetStreamingChatMessageContentsAsync(
+                _history, cancellationToken: cancellationToken))
             {
-                fullResponse.Append(token);
-                yield return token;
+                var token = chunk.Content ?? string.Empty;
+                if (!string.IsNullOrEmpty(token))
+                {
+                    fullResponse.Append(token);
+                    yield return token;
+                }
             }
+            _history.AddAssistantMessage(fullResponse.ToString());
+            completed = true;
         }
-
-        _history.AddAssistantMessage(fullResponse.ToString());
+        finally
+        {
+            if (!completed)
+                while (_history.Count > historyCount)
+                    _history.RemoveAt(_history.Count - 1);
+        }
     }
 
     private static string BuildSystemPrompt(string? gameName)
     {
         var gameContext = gameName is not null
-            ? $"O jogador está jogando **{gameName}** agora."
-            : "O jogador não está jogando nenhum jogo no momento.";
+            ? $"O jogo de referência é **{gameName}**. Isso não informa a fase atual do jogador."
+            : "Nenhum jogo foi informado. Pergunte qual jogo o usuário quer discutir.";
 
         return $"""
             Você é o **GLauncher AI**, um assistente especialista em jogos integrado ao GLauncher.
@@ -105,6 +126,9 @@ public class AiAssistantService : IDisposable
             - Se o usuário enviar um screenshot, analise a situação do jogo e ofereça conselhos contextuais.
             - Seja conciso mas útil. Prefira listas quando listar dicas.
             - Se não souber algo sobre um jogo específico, admita honestamente.
+            - Para ajudar a passar de fase, pergunte a missão, região, chefe ou puzzle quando esse contexto faltar.
+            - Quando houver contexto suficiente, organize a ajuda em objetivo, preparação, passos numerados e estratégia alternativa.
+            - Não invente itens, caminhos, mecânicas nem fontes. Você não possui busca na web nesta conversa.
             - Mantenha o histórico da conversa para dar respostas contextuais.
             """;
     }

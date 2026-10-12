@@ -32,6 +32,7 @@ public static class SettingsService
             // Descriptografa campos sensíveis salvos com DPAPI
             Current.OpenAiApiKey      = SecretsService.Unprotect(Current.OpenAiApiKey);
             Current.GroqApiKey        = SecretsService.Unprotect(Current.GroqApiKey);
+            Current.GeminiApiKey      = SecretsService.Unprotect(Current.GeminiApiKey);
 
             // A chave Groq embutida é apenas um valor legado/ofuscado.
             // Nunca a use como credencial padrão: solicite uma chave configurada pelo usuário.
@@ -100,6 +101,8 @@ public static class SettingsService
                 // As chaves padrão ficam em texto plano para funcionar em qualquer máquina.
                 OpenAiApiKey         = ProtectIfCustom(Current.OpenAiApiKey,      SecretsService.OpenAiApiKey),
                 GroqApiKey           = ProtectIfCustom(Current.GroqApiKey,        SecretsService.GroqApiKey),
+                GeminiApiKey         = ProtectIfCustom(Current.GeminiApiKey, string.Empty),
+                PreferredAiProvider = Current.PreferredAiProvider,
             };
 
             Directory.CreateDirectory(Path.GetDirectoryName(SettingsPath)!);

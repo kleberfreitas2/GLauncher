@@ -143,16 +143,16 @@ public partial class AiAssistantDialog : Window
         _gameName   = gameName;
         _viaGamepad = viaGamepad;
         _xinput     = xinput;
-        _returnToGame = !string.IsNullOrWhiteSpace(gameName);
+        _returnToGame = gameWindowHandle != IntPtr.Zero || !string.IsNullOrWhiteSpace(gameExecutablePath);
         BuildGameKeyboard();
         _ai = new AiAssistantService(provider, apiKey, gameName);
 
         TxtGameContext.Text = gameName is not null
-            ? $"Jogando: {gameName}"
-            : "Assistente Gamer";
+            ? $"{provider} • Jogo: {gameName}"
+            : $"{provider} • Assistente Gamer";
 
         AddAssistantMessage(gameName is not null
-            ? $"Ola! Estou pronto para te ajudar com **{gameName}**. Pode perguntar sobre dicas, puzzles, builds, segredos ou qualquer coisa do jogo!"
+            ? $"Olá! Posso ajudar com **{gameName}**. Em qual missão, fase, chefe ou puzzle você travou? Vou orientar passo a passo, evitando spoilers."
             : "Ola! Sou o GLauncher AI, seu assistente gamer. Pode perguntar sobre qualquer jogo ? dicas, analises, recomendacoes, builds e muito mais!");
 
         Loaded += (_, _) =>
@@ -193,6 +193,7 @@ public partial class AiAssistantDialog : Window
         Closed += (_, _) =>
         {
             _cts.Cancel();
+            _ai.Dispose();
             if (_xinput is not null)
                 _xinput.ButtonPressed    -= OnGamepadButton;
             if (_xinput is not null)
@@ -677,10 +678,14 @@ public partial class AiAssistantDialog : Window
                 ScrollToBottom();
             }
         }
-        catch (OperationCanceledException) { }
+        catch (OperationCanceledException) when (_cts.IsCancellationRequested) { }
+        catch (OperationCanceledException)
+        {
+            assistantMsg.Text = "O serviço demorou para responder. Tente novamente; isso não indica que a chave expirou.";
+        }
         catch (Exception ex)
         {
-            assistantMsg.Text = $"Erro: {ex.Message}";
+            assistantMsg.Text = AiErrorMessages.Describe(ex);
         }
         finally
         {
