@@ -327,24 +327,6 @@ private readonly DispatcherTimer _clockTimer;
                 SelectedGame = first;
         }
 
-        statusCallback?.Invoke("Iniciando serviços de áudio...");
-        await Task.Run(() =>
-        {
-            SoundService.Initialize();
-        });
-
-        statusCallback?.Invoke("Carregando especificações do computador...");
-        try
-        {
-            _hwMonitor = await Task.Run(() => new HardwareMonitorService());
-            _hwMonitor.MetricsUpdated += OnMetricsUpdated;
-            await Task.Run(() => _hwMonitor.RefreshOnce());
-        }
-        catch
-        {
-            _hwMonitor = null;
-        }
-
         // Trofeus: subscrever antes dos restores de plataformas
         _trophyService.TrophyUnlocked += OnTrophyUnlocked;
         _trophyService.OnAppStarted();
@@ -353,7 +335,33 @@ private readonly DispatcherTimer _clockTimer;
         _launcherTimeTimer.Tick += (_, _) => _trophyService.AddLauncherMinutes(1);
         _launcherTimeTimer.Start();
 
-        statusCallback?.Invoke("Conectando contas...");
+        // Não mantenha a tela inicial no splash aguardando sensores/WMI ou
+        // serviços online. Essa etapa é executada em segundo plano após carregar
+        // a biblioteca e exibir a janela principal.
+        _ = InitializeBackgroundServicesAsync(statusCallback);
+    }
+
+    private async Task InitializeBackgroundServicesAsync(Action<string>? statusCallback)
+    {
+        await Task.Run(SoundService.Initialize);
+
+        try
+        {
+            var hardwareMonitor = await Task.Run(() => new HardwareMonitorService());
+            await _dispatcher.InvokeAsync(() =>
+            {
+                _hwMonitor = hardwareMonitor;
+                _hwMonitor.MetricsUpdated += OnMetricsUpdated;
+            });
+            await Task.Run(hardwareMonitor.RefreshOnce);
+            hardwareMonitor.Start();
+        }
+        catch
+        {
+            _hwMonitor = null;
+        }
+
+        await _dispatcher.InvokeAsync(() => statusCallback?.Invoke("Conectando contas..."));
         _ = TryRestoreXboxSessionAsync();
         _ = TryRestoreSteamSessionAsync();
         _ = TryRestoreEpicSessionAsync();
@@ -376,6 +384,7 @@ private readonly DispatcherTimer _clockTimer;
                 if (DetailGame is not null)
                     ScanGameTech(DetailGame);
             }
+
             if (!string.IsNullOrEmpty(m.RamTotal) && string.IsNullOrEmpty(RamTotal))
                 RamTotal = m.RamTotal;
             if (m.StorageDrives.Count > 0 && StorageDrives.Count == 0)
@@ -1154,6 +1163,35 @@ private readonly DispatcherTimer _clockTimer;
             SelectedGame = visible[Math.Clamp(idx, 0, visible.Count - 1)];
         else
             SelectedGame = null;
+    }
+
+    [RelayCommand]
+    private void ClearAllGames()
+    {
+        if (Games.Count == 0)
+        {
+            StatusMessage = "A biblioteca já está vazia.";
+            return;
+        }
+
+        var result = MessageBox.Show(
+            $"Deseja remover todos os {Games.Count} jogos da biblioteca?\n\nEssa ação não desinstala os jogos do computador.",
+            "Limpar biblioteca",
+            MessageBoxButton.YesNo,
+            MessageBoxImage.Warning,
+            MessageBoxResult.No);
+
+        if (result != MessageBoxResult.Yes)
+            return;
+
+        Games.Clear();
+        SelectedGame = null;
+        DetailGame = null;
+        ShowDetailPanel = false;
+        _selectedIndex = -1;
+        _gamesView.Refresh();
+        SaveGames();
+        StatusMessage = "Todos os jogos foram removidos da biblioteca.";
     }
 
     [RelayCommand]

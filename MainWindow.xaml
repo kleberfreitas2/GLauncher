@@ -772,6 +772,11 @@
                                                 <md:PackIcon Kind="ThemeLightDark" Width="16" Height="16"/>
                                             </MenuItem.Icon>
                                         </MenuItem>
+                                        <MenuItem Header="Limpar todos os jogos" Command="{Binding ClearAllGamesCommand}">
+                                            <MenuItem.Icon>
+                                                <md:PackIcon Kind="DeleteSweep" Width="16" Height="16"/>
+                                            </MenuItem.Icon>
+                                        </MenuItem>
                                          <MenuItem Header="Sobre" Click="About_Click">
                                              <MenuItem.Icon>
                                                  <md:PackIcon Kind="InformationOutline" Width="16" Height="16"/>
