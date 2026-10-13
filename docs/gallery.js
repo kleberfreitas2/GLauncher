@@ -6,9 +6,34 @@ if (carousel && lightbox) {
   const dotsContainer = carousel.querySelector("[data-gallery-dots]");
   const caption = carousel.querySelector("[data-gallery-caption]");
   const count = carousel.querySelector("[data-gallery-count]");
+  const autoplayButton = carousel.querySelector("[data-gallery-toggle]");
   const lightboxImage = lightbox.querySelector("[data-lightbox-image]");
   const lightboxCaption = lightbox.querySelector("[data-lightbox-caption]");
   let activeIndex = 0;
+  let autoplayTimer = null;
+  const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  let userPausedAutoplay = prefersReducedMotion;
+
+  function stopAutoplay() {
+    window.clearInterval(autoplayTimer);
+    autoplayTimer = null;
+  }
+
+  function startAutoplay(force = false) {
+    stopAutoplay();
+    const focusedControl = carousel.contains(document.activeElement) && document.activeElement !== autoplayButton;
+    if (userPausedAutoplay || document.hidden || lightbox.open ||
+        (!force && (carousel.matches(":hover") || focusedControl)))
+      return;
+
+    autoplayTimer = window.setInterval(() => showSlide(activeIndex + 1, false), 6_500);
+  }
+
+  function syncAutoplayButton() {
+    autoplayButton.textContent = userPausedAutoplay ? "Reproduzir" : "Pausar";
+    autoplayButton.setAttribute("aria-pressed", String(userPausedAutoplay));
+    autoplayButton.setAttribute("aria-label", userPausedAutoplay ? "Retomar troca automática" : "Pausar troca automática");
+  }
 
   const dots = slides.map((slide, index) => {
     const dot = document.createElement("button");
@@ -20,7 +45,7 @@ if (carousel && lightbox) {
     return dot;
   });
 
-  function showSlide(index) {
+  function showSlide(index, restartAutoplay = true) {
     activeIndex = (index + slides.length) % slides.length;
     slides.forEach((slide, slideIndex) => {
       const isActive = slideIndex === activeIndex;
@@ -32,6 +57,7 @@ if (carousel && lightbox) {
 
     caption.textContent = slides[activeIndex].dataset.caption;
     count.textContent = `${String(activeIndex + 1).padStart(2, "0")} / ${String(slides.length).padStart(2, "0")}`;
+    if (restartAutoplay) startAutoplay();
   }
 
   carousel.querySelector("[data-gallery-previous]").addEventListener("click", () => showSlide(activeIndex - 1));
@@ -44,10 +70,19 @@ if (carousel && lightbox) {
       lightboxImage.alt = image.alt;
       lightboxCaption.textContent = slide.dataset.caption;
       lightbox.showModal();
+      stopAutoplay();
     });
   });
 
+  autoplayButton.addEventListener("click", () => {
+    userPausedAutoplay = !userPausedAutoplay;
+    syncAutoplayButton();
+    if (userPausedAutoplay) stopAutoplay();
+    else startAutoplay(true);
+  });
+
   lightbox.querySelector("[data-lightbox-close]").addEventListener("click", () => lightbox.close());
+  lightbox.addEventListener("close", () => startAutoplay(true));
   lightbox.addEventListener("click", (event) => {
     if (event.target === lightbox) lightbox.close();
   });
@@ -55,6 +90,16 @@ if (carousel && lightbox) {
   carousel.addEventListener("keydown", (event) => {
     if (event.key === "ArrowLeft") showSlide(activeIndex - 1);
     if (event.key === "ArrowRight") showSlide(activeIndex + 1);
+  });
+  carousel.addEventListener("mouseenter", stopAutoplay);
+  carousel.addEventListener("mouseleave", () => startAutoplay());
+  carousel.addEventListener("focusin", stopAutoplay);
+  carousel.addEventListener("focusout", (event) => {
+    if (!carousel.contains(event.relatedTarget)) startAutoplay();
+  });
+  document.addEventListener("visibilitychange", () => {
+    if (document.hidden) stopAutoplay();
+    else startAutoplay();
   });
 
   let touchStartX = null;
@@ -69,4 +114,5 @@ if (carousel && lightbox) {
   }, { passive: true });
 
   showSlide(0);
+  syncAutoplayButton();
 }

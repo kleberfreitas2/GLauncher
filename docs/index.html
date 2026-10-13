@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#090b12">
-  <meta name="description" content="Conheça o GLauncher: organize sua biblioteca de jogos para PC em uma experiência inspirada em consoles.">
+  <meta name="description" content="Descubra o GLauncher: biblioteca de jogos para PC, integrações Steam, Xbox e Epic, capas, Big Picture, controles e dicas com IA.">
   <meta property="og:title" content="GLauncher — sua biblioteca de jogos em um só lugar">
-  <meta property="og:description" content="Um launcher gratuito para organizar, personalizar e jogar no PC.">
-  <meta property="og:image" content="https://github.com/user-attachments/assets/ce4c69d0-9144-477e-b92e-2675be4aecdc">
+  <meta property="og:description" content="Organize sua biblioteca de PC com Steam, Xbox e Epic, navegue com controle e personalize sua experiência de jogo.">
+  <meta property="og:image" content="https://kleberfreitas2.github.io/GLauncher/assets/gallery/library.png">
   <title>GLauncher — sua biblioteca de jogos em um só lugar</title>
   <link rel="icon" type="image/png" href="assets/icon.png">
   <link rel="stylesheet" href="styles.css">
@@ -20,6 +20,7 @@
     </a>
     <nav aria-label="Navegação principal">
       <a href="#recursos">Recursos</a>
+      <a href="#integracoes">Integrações</a>
       <a href="#galeria">Galeria</a>
       <a href="#como-funciona">Como funciona</a>
       <a class="nav-link" href="https://github.com/kleberfreitas2/GLauncher" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a>
@@ -61,33 +62,141 @@
         <article class="feature-card">
           <span class="feature-icon">&#9638;</span>
           <h3>Sua biblioteca em um só lugar</h3>
-          <p>Reúna seus jogos de PC, organize sua coleção e encontre rapidamente o que quer jogar.</p>
+          <p>Reúna jogos instalados, organize sua coleção, marque favoritos e encontre rapidamente o que quer jogar.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon">&#9991;</span>
           <h3>Capas e informações</h3>
-          <p>Enriqueça sua biblioteca com capas, fundos, descrições e informações dos jogos.</p>
+          <p>Enriqueça a coleção com capas, logos, fundos, descrições, gêneros, notas e ano de lançamento.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon">&#8984;</span>
           <h3>Jogue com controle</h3>
-          <p>Navegue pela interface com controles Xbox e PlayStation e aproveite o modo Big Picture.</p>
+          <p>Navegue com controles Xbox ou PlayStation, use atalhos e transforme a interface com o modo Big Picture.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon">&#9672;</span>
           <h3>Do seu jeito</h3>
-          <p>Personalize a aparência e deixe o launcher com a identidade da sua coleção.</p>
+          <p>Escolha entre seis temas, personalize cores, avatar, nome e imagem de fundo.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon">&#10022;</span>
           <h3>Dicas com IA</h3>
-          <p>Converse sobre o jogo selecionado usando Groq, OpenAI ou Gemini com sua própria chave.</p>
+          <p>Peça dicas para o jogo selecionado com Groq, OpenAI ou Gemini e sua própria chave de API.</p>
         </article>
         <article class="feature-card">
           <span class="feature-icon">&#9673;</span>
-          <h3>Seu PC em tempo real</h3>
-          <p>Acompanhe informações de hardware e mantenha os detalhes importantes por perto.</p>
+          <h3>Compatibilidade do seu PC</h3>
+          <p>Consulte processador, placa de vídeo, memória e armazenamento para conhecer sua máquina.</p>
         </article>
+      </div>
+    </section>
+
+    <section class="integrations-section section-wrap" id="integracoes" aria-labelledby="integrations-title">
+      <div class="section-heading">
+        <span class="eyebrow">SEUS JOGOS, SUAS PLATAFORMAS</span>
+        <h2 id="integrations-title">Uma biblioteca que conversa com suas lojas.</h2>
+        <p>Importe os jogos encontrados no PC e acesse sua coleção a partir de uma única interface.</p>
+      </div>
+      <div class="integration-grid">
+        <article class="integration-card steam-card">
+          <span class="integration-mark">S</span>
+          <div><span class="integration-label">BIBLIOTECA LOCAL</span><h3>Steam</h3></div>
+          <p>Detecta a conta Steam local e permite importar jogos instalados para o GLauncher.</p>
+          <span class="integration-tag">Perfil e jogos instalados</span>
+        </article>
+        <article class="integration-card xbox-card">
+          <span class="integration-mark">X</span>
+          <div><span class="integration-label">PERFIL E INSTALAÇÕES</span><h3>Xbox</h3></div>
+          <p>Conecte o perfil Xbox Live e procure jogos instalados pela Xbox app e Microsoft Store.</p>
+          <span class="integration-tag">Xbox Live e PC Game Pass</span>
+        </article>
+        <article class="integration-card epic-card">
+          <span class="integration-mark">E</span>
+          <div><span class="integration-label">DETECÇÃO AUTOMÁTICA</span><h3>Epic Games</h3></div>
+          <p>Encontra jogos instalados pelos manifestos da Epic Games Store e facilita a importação.</p>
+          <span class="integration-tag">Jogos instalados no PC</span>
+        </article>
+      </div>
+      <p class="section-footnote">As lojas continuam responsáveis pelas contas, licenças, downloads e atualizações dos jogos.</p>
+    </section>
+
+    <section class="game-info-section">
+      <div class="section-wrap info-layout">
+        <div class="info-copy">
+          <span class="eyebrow">CAPAS, DETALHES E DESCOBERTAS</span>
+          <h2>Uma vitrine com a cara da sua coleção.</h2>
+          <p>O GLauncher complementa cada jogo com arte e informações para deixar a biblioteca fácil de explorar.</p>
+        </div>
+        <div class="info-list">
+          <article><span class="info-number">01</span><div><h3>Capas, logos e fundos</h3><p>Busque artes na SteamGridDB, escolha entre resultados visuais ou use seus próprios arquivos.</p></div></article>
+          <article><span class="info-number">02</span><div><h3>Informações IGDB</h3><p>Veja sinopse em português, gêneros, avaliação da comunidade, ano e capturas quando disponíveis.</p></div></article>
+          <article><span class="info-number">03</span><div><h3>Renomeou? Pesquise de novo.</h3><p>Ao corrigir o nome de um jogo, o launcher pode refazer a busca por artes e dados que faltaram.</p></div></article>
+          <article><span class="info-number">04</span><div><h3>Biblioteca organizada</h3><p>Favorite, altere nomes, ajuste imagens e remova jogos sem desinstalá-los do computador.</p></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="play-section section-wrap" aria-labelledby="play-title">
+      <div class="play-copy">
+        <span class="eyebrow">DO DESKTOP À SALA DE ESTAR</span>
+        <h2 id="play-title">Pegue o controle.<br><span>Entre no jogo.</span></h2>
+        <p>O modo Big Picture amplia a experiência para navegar de longe. Use o controle para percorrer zonas da interface, escolher jogos e abrir opções.</p>
+        <div class="controller-pills"><span>Xbox One e Series</span><span>DualSense</span><span>DualShock 4</span><span>XInput + HID</span></div>
+      </div>
+      <div class="play-panel">
+        <div class="play-panel-heading"><span class="play-ring">&#9678;</span><div><strong>Navegação por controle</strong><small>Interface pronta para jogar</small></div></div>
+        <div class="control-row"><kbd>D-Pad</kbd><span>Navegar entre jogos e áreas</span></div>
+        <div class="control-row"><kbd>A / X</kbd><span>Confirmar ou iniciar</span></div>
+        <div class="control-row"><kbd>Y / Triângulo</kbd><span>Opções do jogo selecionado</span></div>
+        <div class="control-row"><kbd>B / Círculo</kbd><span>Voltar ou fechar diálogos</span></div>
+        <p class="play-note">A interface também pode minimizar ao iniciar um jogo e voltar quando ele for fechado.</p>
+      </div>
+    </section>
+
+    <section class="smart-section">
+      <div class="section-wrap smart-layout">
+        <div class="smart-copy">
+          <span class="eyebrow">AJUDA CONTEXTUAL PARA JOGAR</span>
+          <h2>Conheça o <span>GLauncher AI.</span></h2>
+          <p>Peça dicas contextualizadas de progressão, puzzles e desafios, com foco em ajudar sem entregar spoilers. Você escolhe o provedor e configura sua própria chave.</p>
+          <div class="provider-list"><span>Groq</span><span>OpenAI</span><span>Gemini</span></div>
+          <small>Use o atalho global ou abra o chat durante o jogo. A interface aceita navegação por controle; as chaves são protegidas localmente no Windows.</small>
+        </div>
+        <div class="smart-card" aria-label="Exemplo de dicas que podem ser solicitadas à IA">
+          <div class="smart-card-top"><span class="ai-spark">&#10022;</span><span>GLAUNCHER AI</span><span class="ai-online">ASSISTENTE</span></div>
+          <p class="ai-question">“Como avanço nesta missão?”</p>
+          <div class="ai-answer"><span class="answer-line"></span><span class="answer-line short"></span><span class="answer-line medium"></span></div>
+          <div class="ai-context">CONTEXTO DO JOGO SELECIONADO</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="extras-section section-wrap" aria-labelledby="extras-title">
+      <div class="section-heading">
+        <span class="eyebrow">DETALHES QUE FAZEM DIFERENÇA</span>
+        <h2 id="extras-title">Feito para acompanhar sua rotina gamer.</h2>
+      </div>
+      <div class="extras-grid">
+        <article class="extra-card"><span class="extra-icon">&#10022;</span><h3>Temas e identidade</h3><p>Roxo Neon, Azul Elétrico, Matrix, Vermelho, Rosa Cyber e Ártico; personalize cores, avatar, nome e fundo.</p></article>
+        <article class="extra-card"><span class="extra-icon">&#9673;</span><h3>Troféus e tempo de jogo</h3><p>Conquiste marcos pelo uso do launcher e acompanhe o progresso da sua coleção.</p></article>
+        <article class="extra-card"><span class="extra-icon">&#9835;</span><h3>Sons de interface</h3><p>Sete efeitos gerados para navegação, seleção, retorno, favoritos, zonas, inicialização e erros — com opção para desligar.</p></article>
+        <article class="extra-card"><span class="extra-icon">&#9638;</span><h3>Informações do computador</h3><p>Consulte CPU, GPU, memória e drives para conhecer as especificações do seu PC.</p></article>
+        <article class="extra-card"><span class="extra-icon">&#10227;</span><h3>Atualizações pelo GitHub</h3><p>Confira se há uma versão nova e abra o download oficial diretamente pela tela Sobre.</p></article>
+        <article class="extra-card"><span class="extra-icon">&#8982;</span><h3>Busca e organização</h3><p>Use favoritos, opções por jogo e reprocessamento de artes para manter a biblioteca em ordem.</p></article>
+      </div>
+    </section>
+
+    <section class="specs-section section-wrap" aria-labelledby="specs-title">
+      <div class="section-heading">
+        <span class="eyebrow">LEVE E PRONTO PARA WINDOWS</span>
+        <h2 id="specs-title">Confira os requisitos.</h2>
+        <p>O GLauncher foi feito para rodar em PCs Windows. Alguns recursos conectados precisam de internet.</p>
+      </div>
+      <div class="specs-grid">
+        <article class="spec-card"><span class="spec-label">MÍNIMO</span><strong>Para começar</strong><ul><li>Windows 10, 64 bits</li><li>Processador dual-core, 2 GHz</li><li>4 GB de RAM</li><li>DirectX 11 e 1 GB de VRAM</li><li>1 GB de espaço livre</li></ul></article>
+        <article class="spec-card recommended"><span class="spec-label">RECOMENDADO</span><strong>Para uma experiência melhor</strong><ul><li>Windows 10 ou 11, 64 bits</li><li>Processador quad-core, 3 GHz</li><li>8 GB de RAM</li><li>DirectX 12 e 2 GB de VRAM</li><li>SSD e 2 GB livres</li></ul></article>
+        <article class="spec-card online-card"><span class="spec-label">RECURSOS ONLINE</span><strong>Internet necessária para</strong><ul><li>Buscar capas e fundos</li><li>Consultar informações IGDB</li><li>Traduzir descrições</li><li>Conectar perfis e importar jogos</li><li>Conferir novas versões</li></ul></article>
       </div>
     </section>
 
@@ -98,7 +207,7 @@
         <p>Explore o manual integrado, acompanhe suas conquistas e veja a biblioteca de jogos em ação. Clique em uma imagem para ampliá-la.</p>
         <a class="text-link" href="https://github.com/kleberfreitas2/GLauncher" target="_blank" rel="noopener noreferrer">Explore o projeto no GitHub <span aria-hidden="true">&#8599;</span></a>
       </div>
-      <div class="gallery-carousel" data-gallery-carousel aria-label="Capturas de tela do GLauncher">
+      <div class="gallery-carousel" data-gallery-carousel role="region" aria-label="Capturas de tela do GLauncher">
         <div class="gallery-stage">
           <button class="gallery-image" type="button" data-gallery-slide data-caption="Manual integrado — requisitos do sistema, recursos e orientações para começar." aria-label="Ampliar captura do manual integrado">
             <img src="assets/gallery/manual.png" alt="Manual do GLauncher aberto, com requisitos do sistema e lista de recursos">
@@ -120,6 +229,7 @@
           <div class="gallery-controls">
             <span class="gallery-count" data-gallery-count></span>
             <div class="gallery-dots" data-gallery-dots aria-label="Selecionar imagem"></div>
+            <button class="gallery-autoplay" type="button" data-gallery-toggle aria-pressed="false" aria-label="Pausar troca automática">Pausar</button>
           </div>
         </div>
       </div>
@@ -138,6 +248,20 @@
           <li><span class="step-number">02</span><div><h3>Adicione seus jogos</h3><p>Importe jogos compatíveis ou adicione executáveis à sua biblioteca.</p></div></li>
           <li><span class="step-number">03</span><div><h3>Personalize e aproveite</h3><p>Configure a aparência, conecte seu controle e escolha seu próximo jogo.</p></div></li>
         </ol>
+      </div>
+    </section>
+
+    <section class="faq-section section-wrap" aria-labelledby="faq-title">
+      <div class="section-heading">
+        <span class="eyebrow">DÚVIDAS FREQUENTES</span>
+        <h2 id="faq-title">Antes de instalar.</h2>
+      </div>
+      <div class="faq-list">
+        <details><summary>O GLauncher substitui as lojas de jogos?</summary><p>Não. Ele organiza e inicia os jogos instalados; contas, licenças, downloads e atualizações continuam nas lojas oficiais.</p></details>
+        <details><summary>Preciso configurar cada integração?</summary><p>Steam e Epic detectam instalações locais. Para recursos de perfil do Xbox Live, conecte sua conta Microsoft pelo próprio launcher.</p></details>
+        <details><summary>O assistente de IA já inclui uma assinatura?</summary><p>Não. Escolha Groq, OpenAI ou Gemini e configure sua própria chave. Custos e limites seguem as condições do provedor escolhido.</p></details>
+        <details><summary>Posso usar o GLauncher sem controle?</summary><p>Sim. Use mouse e teclado; o gamepad Xbox ou PlayStation é opcional e pode ser usado para navegar pelo modo Big Picture.</p></details>
+        <details><summary>Preciso estar conectado à internet para abrir meus jogos?</summary><p>Os jogos locais podem ser iniciados pelo launcher. Internet é necessária para buscas de artes, dados online, traduções, integrações de perfil e atualização.</p></details>
       </div>
     </section>
 
