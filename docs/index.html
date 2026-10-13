@@ -20,6 +20,7 @@
     </a>
     <nav aria-label="Navegação principal">
       <a href="#recursos">Recursos</a>
+      <a href="#galeria">Galeria</a>
       <a href="#como-funciona">Como funciona</a>
       <a class="nav-link" href="https://github.com/kleberfreitas2/GLauncher" target="_blank" rel="noopener noreferrer">GitHub &#8599;</a>
     </nav>
@@ -90,16 +91,38 @@
       </div>
     </section>
 
-    <section class="showcase section-wrap" aria-labelledby="showcase-title">
+    <section class="showcase section-wrap" id="galeria" aria-labelledby="showcase-title">
       <div class="showcase-copy">
-        <span class="eyebrow">UMA INTERFACE PARA CURTIR</span>
-        <h2 id="showcase-title">Sua coleção merece<br>um lugar especial.</h2>
-        <p>Veja seus jogos com capas e detalhes em destaque, navegue com o controle e transforme o PC em uma experiência de sala de estar.</p>
+        <span class="eyebrow">CONHEÇA POR DENTRO</span>
+        <h2 id="showcase-title">GLauncher em<br>cada detalhe.</h2>
+        <p>Explore o manual integrado, acompanhe suas conquistas e veja a biblioteca de jogos em ação. Clique em uma imagem para ampliá-la.</p>
         <a class="text-link" href="https://github.com/kleberfreitas2/GLauncher" target="_blank" rel="noopener noreferrer">Explore o projeto no GitHub <span aria-hidden="true">&#8599;</span></a>
       </div>
-      <a class="screenshot-frame" href="https://github.com/user-attachments/assets/ce4c69d0-9144-477e-b92e-2675be4aecdc" target="_blank" rel="noopener noreferrer" aria-label="Abrir captura de tela do GLauncher">
-        <img src="https://github.com/user-attachments/assets/ce4c69d0-9144-477e-b92e-2675be4aecdc" alt="Captura de tela da biblioteca do GLauncher">
-      </a>
+      <div class="gallery-carousel" data-gallery-carousel aria-label="Capturas de tela do GLauncher">
+        <div class="gallery-stage">
+          <button class="gallery-image" type="button" data-gallery-slide data-caption="Manual integrado — requisitos do sistema, recursos e orientações para começar." aria-label="Ampliar captura do manual integrado">
+            <img src="assets/gallery/manual.png" alt="Manual do GLauncher aberto, com requisitos do sistema e lista de recursos">
+            <span class="gallery-zoom-hint">Clique para ampliar <span aria-hidden="true">⌕</span></span>
+          </button>
+          <button class="gallery-image" type="button" data-gallery-slide data-caption="Conquistas e troféus — acompanhe o progresso e as metas alcançadas na sua jornada." aria-label="Ampliar captura das conquistas">
+            <img src="assets/gallery/trophies.png" alt="Tela de troféus do GLauncher com progresso e cartões de conquistas">
+            <span class="gallery-zoom-hint">Clique para ampliar <span aria-hidden="true">⌕</span></span>
+          </button>
+          <button class="gallery-image" type="button" data-gallery-slide data-caption="Biblioteca em destaque — navegue pelos jogos, veja informações, capturas e dados do PC." aria-label="Ampliar captura da biblioteca de jogos">
+            <img src="assets/gallery/library.png" alt="Tela principal do GLauncher com carrossel de jogos, detalhes e informações do PC">
+            <span class="gallery-zoom-hint">Clique para ampliar <span aria-hidden="true">⌕</span></span>
+          </button>
+          <button class="gallery-arrow gallery-previous" type="button" data-gallery-previous aria-label="Imagem anterior">&#8592;</button>
+          <button class="gallery-arrow gallery-next" type="button" data-gallery-next aria-label="Próxima imagem">&#8594;</button>
+        </div>
+        <div class="gallery-footer">
+          <p class="gallery-caption" data-gallery-caption aria-live="polite"></p>
+          <div class="gallery-controls">
+            <span class="gallery-count" data-gallery-count></span>
+            <div class="gallery-dots" data-gallery-dots aria-label="Selecionar imagem"></div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <section class="steps-section" id="como-funciona">
@@ -130,5 +153,11 @@
     <span>Feito para quem ama jogar no PC.</span>
     <div><a href="https://github.com/kleberfreitas2/GLauncher" target="_blank" rel="noopener noreferrer">Código-fonte</a><a href="https://github.com/kleberfreitas2/GLauncher/releases/latest" target="_blank" rel="noopener noreferrer">Downloads</a></div>
   </footer>
+  <dialog class="lightbox" data-lightbox aria-label="Imagem ampliada">
+    <button class="lightbox-close" type="button" data-lightbox-close aria-label="Fechar imagem ampliada">&times;</button>
+    <img data-lightbox-image alt="">
+    <p data-lightbox-caption></p>
+  </dialog>
+  <script src="gallery.js" defer></script>
 </body>
 </html>
