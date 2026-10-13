@@ -1285,9 +1285,13 @@ private readonly DispatcherTimer _clockTimer;
     {
         try
         {
+            var gameAlreadyRunning = !string.IsNullOrWhiteSpace(game.AppUserModelId)
+                ? GameProcessMonitor.IsAnyProcessRunningInDirectory(game.InstallDirectory)
+                : IsExecutableRunning(game.ExecutablePath);
+
             if ((!string.IsNullOrWhiteSpace(_runningGameExecutablePath)
                  && SameExecutable(_runningGameExecutablePath, game.ExecutablePath))
-                || IsExecutableRunning(game.ExecutablePath))
+                || gameAlreadyRunning)
             {
                 StatusMessage = $"'{game.DisplayName}' já está em execução.";
                 return;
@@ -1298,16 +1302,29 @@ private readonly DispatcherTimer _clockTimer;
             _runningGameName = game.DisplayName;
             _runningGameExecutablePath = game.ExecutablePath;
 
-            var workDir = string.IsNullOrEmpty(game.InstallDirectory)
-                ? Path.GetDirectoryName(game.ExecutablePath) ?? string.Empty
-                : game.InstallDirectory;
-
-            var proc = Process.Start(new ProcessStartInfo
+            ProcessStartInfo startInfo;
+            if (!string.IsNullOrWhiteSpace(game.AppUserModelId))
             {
-                FileName = game.ExecutablePath,
-                UseShellExecute = true,
-                WorkingDirectory = workDir
-            });
+                startInfo = new ProcessStartInfo("explorer.exe", $"shell:AppsFolder\\{game.AppUserModelId}")
+                {
+                    UseShellExecute = true
+                };
+            }
+            else
+            {
+                var workDir = string.IsNullOrEmpty(game.InstallDirectory)
+                    ? Path.GetDirectoryName(game.ExecutablePath) ?? string.Empty
+                    : game.InstallDirectory;
+
+                startInfo = new ProcessStartInfo
+                {
+                    FileName = game.ExecutablePath,
+                    UseShellExecute = true,
+                    WorkingDirectory = workDir
+                };
+            }
+
+            var proc = Process.Start(startInfo);
 
             // Mantém o jogo visível em primeiro plano sem deixar o launcher
             // aparecer por trás do overlay da IA.
@@ -1340,7 +1357,10 @@ private readonly DispatcherTimer _clockTimer;
                 _aiHintTimer.Stop();
                 _aiHintTimer = null;
 
-                if (proc is not null && !proc.HasExited)
+                var gameProcessStarted = !string.IsNullOrWhiteSpace(game.AppUserModelId)
+                    ? GameProcessMonitor.IsAnyProcessRunningInDirectory(game.InstallDirectory)
+                    : IsExecutableRunning(game.ExecutablePath);
+                if (gameProcessStarted)
                 {
                     var aiHint = new AiHintOverlay(_xinput);
                     aiHint.Show();
@@ -1352,7 +1372,9 @@ private readonly DispatcherTimer _clockTimer;
             _ = Task.Run(async () =>
             {
                 var playedMinutes = await GameProcessMonitor.WaitForGameExitAsync(
-                    game.ExecutablePath, proc);
+                    game.ExecutablePath,
+                    proc,
+                    packageInstallDirectory: game.AppUserModelId is not null ? game.InstallDirectory : null);
 
                 await _dispatcher.BeginInvoke(() =>
                 {
@@ -1812,10 +1834,10 @@ private readonly DispatcherTimer _clockTimer;
 
         if (xboxGames.Count == 0)
         {
-            StatusMessage = "Nenhum jogo Xbox encontrado nas pastas padrão (XboxGames).";
+            StatusMessage = "Nenhum jogo Xbox instalado foi encontrado.";
             MessageBox.Show(
                 "Nenhum jogo Xbox Game Pass encontrado.\n\n" +
-                "Verifique se há jogos instalados nas pastas XboxGames dos seus discos.",
+                "Verifique se há jogos instalados nas pastas XboxGames ou pela Microsoft Store/Xbox neste usuário do Windows.",
                 "Xbox Games", MessageBoxButton.OK, MessageBoxImage.Information);
             return;
         }
@@ -1825,7 +1847,10 @@ private readonly DispatcherTimer _clockTimer;
 
         foreach (var xg in xboxGames)
         {
-            if (Games.Any(g => g.ExecutablePath.Equals(xg.ExecutablePath, StringComparison.OrdinalIgnoreCase)))
+            if (Games.Any(g =>
+                    g.ExecutablePath.Equals(xg.ExecutablePath, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrEmpty(xg.AppUserModelId) &&
+                     g.AppUserModelId?.Equals(xg.AppUserModelId, StringComparison.OrdinalIgnoreCase) == true)))
                 continue;
 
             xg.SortOrder = NextSortOrder();

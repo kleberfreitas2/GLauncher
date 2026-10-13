@@ -18,7 +18,8 @@ public static class GameProcessMonitor
     public static async Task<double> WaitForGameExitAsync(
         string executablePath,
         Process? stubProcess,
-        TimeSpan? timeout = null)
+        TimeSpan? timeout = null,
+        string? packageInstallDirectory = null)
     {
         var totalTimeout = timeout ?? TimeSpan.FromHours(6);
         var started = DateTime.UtcNow;
@@ -44,13 +45,27 @@ public static class GameProcessMonitor
 
         while (DateTime.UtcNow < findDeadline)
         {
-            gameProcess = FindProcess(processName);
+            gameProcess = FindProcess(processName) ?? FindProcessInDirectory(packageInstallDirectory);
             if (gameProcess is not null) break;
             await Task.Delay(1_000);
         }
 
         if (gameProcess is not null)
         {
+            if (!string.IsNullOrWhiteSpace(packageInstallDirectory))
+            {
+                var lastSeen = DateTime.UtcNow;
+                while (DateTime.UtcNow - started < totalTimeout && DateTime.UtcNow - lastSeen < TimeSpan.FromSeconds(10))
+                {
+                    if (IsAnyProcessRunningInDirectory(packageInstallDirectory))
+                        lastSeen = DateTime.UtcNow;
+                    await Task.Delay(1_000);
+                }
+
+                gameProcess.Dispose();
+                return (DateTime.UtcNow - started).TotalMinutes;
+            }
+
             // 3. Processo encontrado — aguarda ele encerrar
             try
             {
@@ -81,5 +96,49 @@ public static class GameProcessMonitor
         {
             return null;
         }
+    }
+
+    public static bool IsAnyProcessRunningInDirectory(string? directory)
+    {
+        var process = FindProcessInDirectory(directory);
+        if (process is null)
+            return false;
+
+        process.Dispose();
+        return true;
+    }
+
+    private static Process? FindProcessInDirectory(string? directory)
+    {
+        if (string.IsNullOrWhiteSpace(directory))
+            return null;
+
+        try
+        {
+            var root = Path.GetFullPath(directory).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+            foreach (var process in Process.GetProcesses())
+            {
+                var isInDirectory = false;
+                try
+                {
+                    var processPath = process.MainModule?.FileName;
+                    isInDirectory = processPath is not null &&
+                                    Path.GetFullPath(processPath).StartsWith(root, StringComparison.OrdinalIgnoreCase);
+                }
+                catch
+                {
+                }
+
+                if (isInDirectory)
+                    return process;
+
+                process.Dispose();
+            }
+        }
+        catch
+        {
+        }
+
+        return null;
     }
 }

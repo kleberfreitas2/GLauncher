@@ -29,7 +29,7 @@
             <TextBlock x:Name="VersionText" FontSize="15" Foreground="#00E676" Margin="0,8,0,20"/>
             <TextBlock Text="Desenvolvido por Kleber Freitas" FontSize="14" Foreground="#AABBCC"/>
             <TextBlock Text="Game Launcher para Windows" FontSize="13" Foreground="#7788AA" Margin="0,4,0,14"/>
-            <TextBlock Text="github.com/kleberfreitas2/GameLauncher"
+            <TextBlock Text="github.com/kleberfreitas2/GLauncher"
                        Foreground="#66C0F4" TextDecorations="Underline" Cursor="Hand"
                        MouseLeftButtonUp="GitHub_Click"/>
             <TextBlock x:Name="UpdateStatus" TextWrapping="Wrap" Foreground="#BBAADD"

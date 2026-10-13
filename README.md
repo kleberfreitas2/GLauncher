@@ -26,9 +26,11 @@ O **GLauncher** é um launcher de jogos desktop desenvolvido em **C# com WPF**, 
 
 ## ⬇️ Download
 
+### 🌐 [Acesse o site oficial do GLauncher](https://kleberfreitas2.github.io/GLauncher/)
+
 ### Baixe a última versão do GLauncher na aba Releases:
 
-  ### 👉 [![Download GLauncher](https://img.shields.io/badge/⬇_DOWNLOAD_GLauncher_v2.11.0-3B82F6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GameLauncher/releases/latest)
+  ### 👉 [![Download GLauncher](https://img.shields.io/badge/⬇_DOWNLOAD_GLauncher_v2.11.0-3B82F6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GLauncher/releases/latest)
 
 > Baixe o instalador `GLauncher_Setup_v2.11.0.exe` na release e siga as etapas de instalação.
 >
@@ -300,8 +302,8 @@ GameLauncher/
 ### Compilar e executar
 
 ```bash
-git clone https://github.com/kleberfreitas2/GameLauncher.git
-cd GameLauncher
+git clone https://github.com/kleberfreitas2/GLauncher.git
+cd GLauncher
 dotnet run --project GameLauncher.csproj
 ```
 

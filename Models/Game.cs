@@ -35,6 +35,7 @@ public partial class Game : ObservableObject
 
     public string ExecutablePath { get; set; } = string.Empty;
     public string? InstallDirectory { get; set; }
+    public string? AppUserModelId { get; set; }
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(LastPlayedText))]

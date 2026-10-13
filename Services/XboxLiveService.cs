@@ -1,4 +1,5 @@
 using System.IO;
+using System.Diagnostics;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Text;
@@ -324,10 +325,16 @@ public sealed class XboxLiveService : IDisposable
 
         foreach (var drive in System.IO.DriveInfo.GetDrives())
         {
-            if (drive.DriveType != System.IO.DriveType.Fixed) continue;
-            var xboxPath = System.IO.Path.Combine(drive.Name, "XboxGames");
-            if (System.IO.Directory.Exists(xboxPath))
-                xboxFolders.Add(xboxPath);
+            try
+            {
+                if (drive.DriveType != System.IO.DriveType.Fixed || !drive.IsReady) continue;
+                var xboxPath = System.IO.Path.Combine(drive.RootDirectory.FullName, "XboxGames");
+                if (System.IO.Directory.Exists(xboxPath))
+                    xboxFolders.Add(xboxPath);
+            }
+            catch
+            {
+            }
         }
 
         foreach (var folder in xboxFolders)
@@ -336,39 +343,157 @@ public sealed class XboxLiveService : IDisposable
             {
                 foreach (var gameDir in System.IO.Directory.GetDirectories(folder))
                 {
-                    var contentDir = System.IO.Path.Combine(gameDir, "Content");
-                    var searchDir = System.IO.Directory.Exists(contentDir) ? contentDir : gameDir;
-
-                    var exeFiles = System.IO.Directory.GetFiles(searchDir, "*.exe",
-                        System.IO.SearchOption.AllDirectories);
-
-                    var mainExe = exeFiles
-                        .Select(f => new System.IO.FileInfo(f))
-                        .Where(f => f.Length > 100_000)
-                        .Where(f => !IsExcludedExe(f.Name))
-                        .OrderByDescending(f => f.Length)
-                        .FirstOrDefault();
-
-                    if (mainExe is null || foundPaths.Contains(mainExe.FullName))
-                        continue;
-
-                    foundPaths.Add(mainExe.FullName);
-
-                    var gameName = System.IO.Path.GetFileName(gameDir);
-
-                    games.Add(new Game
+                    try
                     {
-                        Name = gameName,
-                        ExecutablePath = mainExe.FullName,
-                        InstallDirectory = gameDir,
-                        IconPath = IconExtractor.ExtractIcon(mainExe.FullName)
-                    });
+                        var contentDir = System.IO.Path.Combine(gameDir, "Content");
+                        var searchDir = System.IO.Directory.Exists(contentDir) ? contentDir : gameDir;
+
+                        var exeFiles = System.IO.Directory.GetFiles(searchDir, "*.exe",
+                            System.IO.SearchOption.AllDirectories);
+
+                        var mainExe = exeFiles
+                            .Select(f => new System.IO.FileInfo(f))
+                            .Where(f => f.Length > 100_000)
+                            .Where(f => !IsExcludedExe(f.Name))
+                            .OrderByDescending(f => f.Length)
+                            .FirstOrDefault();
+
+                        if (mainExe is null || foundPaths.Contains(mainExe.FullName))
+                            continue;
+
+                        foundPaths.Add(mainExe.FullName);
+
+                        var gameName = System.IO.Path.GetFileName(gameDir);
+
+                        games.Add(new Game
+                        {
+                            Name = gameName,
+                            ExecutablePath = mainExe.FullName,
+                            InstallDirectory = gameDir,
+                            IconPath = IconExtractor.ExtractIcon(mainExe.FullName)
+                        });
+                    }
+                    catch
+                    {
+                    }
                 }
             }
             catch { }
         }
 
+        foreach (var app in ScanXboxStoreApps())
+        {
+            if (foundPaths.Add(app.ExecutablePath))
+            {
+                games.Add(new Game
+                {
+                    Name = app.Name,
+                    ExecutablePath = app.ExecutablePath,
+                    InstallDirectory = app.InstallDirectory,
+                    AppUserModelId = app.AppUserModelId,
+                    IconPath = IconExtractor.ExtractIcon(app.ExecutablePath)
+                });
+            }
+        }
+
         return games;
+    }
+
+    private static List<InstalledXboxStoreApp> ScanXboxStoreApps()
+    {
+        const string script = """
+            [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
+            $startApps = @{}
+            Get-StartApps | ForEach-Object { $startApps[$_.AppID] = $_.Name }
+            $gameConfigs = @(Get-ChildItem 'HKLM:\SOFTWARE\Microsoft\GamingServices\GameConfig' -ErrorAction SilentlyContinue | ForEach-Object { $_.PSChildName })
+            $found = @()
+            Get-AppxPackage | ForEach-Object {
+                $package = $_
+                if ($package.Name -eq 'Microsoft.XboxDevices') { return }
+                $manifestPath = Join-Path $package.InstallLocation 'AppxManifest.xml'
+                if (-not $package.InstallLocation -or -not (Test-Path -LiteralPath $manifestPath)) { return }
+                try { [xml]$manifest = Get-Content -LiteralPath $manifestPath -Raw } catch { return }
+                $isXboxGame = ($gameConfigs | Where-Object { $_.StartsWith($package.Name + '_', [StringComparison]::OrdinalIgnoreCase) }).Count -gt 0
+                if (-not $isXboxGame -and $manifest.OuterXml -notmatch 'ms-xbl-') { return }
+                foreach ($application in @($manifest.Package.Applications.Application)) {
+                    $appUserModelId = $package.PackageFamilyName + '!' + $application.Id
+                    $executablePath = Join-Path $package.InstallLocation $application.Executable
+                    if ($startApps.ContainsKey($appUserModelId) -and $application.Executable -and (Test-Path -LiteralPath $executablePath)) {
+                        $found += [pscustomobject]@{
+                            Name = $startApps[$appUserModelId]
+                            ExecutablePath = $executablePath
+                            InstallDirectory = $package.InstallLocation
+                            AppUserModelId = $appUserModelId
+                        }
+                    }
+                }
+            }
+            $found | ConvertTo-Json -Compress
+            """;
+
+        try
+        {
+            var encodedScript = Convert.ToBase64String(Encoding.Unicode.GetBytes(script));
+            var startInfo = new ProcessStartInfo("powershell.exe")
+            {
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                StandardOutputEncoding = Encoding.UTF8,
+                StandardErrorEncoding = Encoding.UTF8
+            };
+            startInfo.ArgumentList.Add("-NoProfile");
+            startInfo.ArgumentList.Add("-NonInteractive");
+            startInfo.ArgumentList.Add("-ExecutionPolicy");
+            startInfo.ArgumentList.Add("Bypass");
+            startInfo.ArgumentList.Add("-EncodedCommand");
+            startInfo.ArgumentList.Add(encodedScript);
+
+            using var process = Process.Start(startInfo);
+            if (process is null)
+                return [];
+
+            var outputTask = process.StandardOutput.ReadToEndAsync();
+            var errorTask = process.StandardError.ReadToEndAsync();
+            if (!process.WaitForExit(20_000))
+            {
+                process.Kill(true);
+                return [];
+            }
+
+            var output = outputTask.GetAwaiter().GetResult();
+            _ = errorTask.GetAwaiter().GetResult();
+            if (process.ExitCode != 0 || string.IsNullOrWhiteSpace(output))
+                return [];
+
+            using var document = JsonDocument.Parse(output);
+            var elements = document.RootElement.ValueKind == JsonValueKind.Array
+                ? document.RootElement.EnumerateArray().ToArray()
+                : [document.RootElement];
+
+            return elements
+                .Select(element => JsonSerializer.Deserialize<InstalledXboxStoreApp>(element.GetRawText()))
+                .Where(app => app is not null &&
+                              !string.IsNullOrWhiteSpace(app.Name) &&
+                              !string.IsNullOrWhiteSpace(app.ExecutablePath) &&
+                              !string.IsNullOrWhiteSpace(app.AppUserModelId))
+                .Cast<InstalledXboxStoreApp>()
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Xbox Store app scan failed: {ex.Message}");
+            return [];
+        }
+    }
+
+    private sealed class InstalledXboxStoreApp
+    {
+        public string Name { get; set; } = string.Empty;
+        public string ExecutablePath { get; set; } = string.Empty;
+        public string InstallDirectory { get; set; } = string.Empty;
+        public string AppUserModelId { get; set; } = string.Empty;
     }
 
     private static readonly HashSet<string> ExcludedKeywords = new(StringComparer.OrdinalIgnoreCase)

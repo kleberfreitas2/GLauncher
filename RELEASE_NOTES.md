@@ -6,7 +6,7 @@
 
 ### Launcher de jogos estilo PS5 para PC
 
-[![Download GLauncher v2.11.0](https://img.shields.io/badge/⬇_DOWNLOAD_v2.11.0-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GameLauncher/releases/latest)
+[![Download GLauncher v2.11.0](https://img.shields.io/badge/⬇_DOWNLOAD_v2.11.0-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GLauncher/releases/latest)
 
 > Baixe e execute o instalador `GLauncher_Setup_v2.11.0.exe`.
 >

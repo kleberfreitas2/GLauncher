@@ -8,7 +8,7 @@ namespace GameLauncher.Services;
 
 public sealed class UpdateService
 {
-    private const string Repository = "kleberfreitas2/GameLauncher";
+    private const string Repository = "kleberfreitas2/GLauncher";
     private const string UpdateBranch = "Feature-GameLauncher";
     private readonly HttpClient _http = new();
 
