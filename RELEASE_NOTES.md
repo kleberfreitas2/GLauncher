@@ -2,13 +2,13 @@
 
 <img src="Assets/icon.png" width="80" alt="GLauncher"/>
 
-# 🚀 GLauncher v2.11.2
+# 🚀 GLauncher v2.11.4
 
 ### Launcher de jogos estilo PS5 para PC
 
-[![Download GLauncher v2.11.2](https://img.shields.io/badge/⬇_DOWNLOAD_v2.11.2-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GLauncher/releases/latest)
+[![Download GLauncher v2.11.4](https://img.shields.io/badge/⬇_DOWNLOAD_v2.11.4-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GLauncher/releases/latest)
 
-> Baixe e execute o instalador `GLauncher_Setup_v2.11.2.exe`.
+> Baixe e execute o instalador `GLauncher_Setup_v2.11.4.exe`.
 >
 > Requer **Windows 10/11 (x64)** • [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 
@@ -16,21 +16,22 @@
 
 ---
 
-## 🆕 Novidades da versão 2.11.2
+## 🆕 Novidades da versão 2.11.4
 
-Esta versão refina a apresentação das capas e capturas do modo Big Picture, mantendo os recursos introduzidos nas versões anteriores.
+Esta versão reorganiza e alinha a área de detalhes no modo Big Picture, mantendo os recursos introduzidos nas versões anteriores.
 
 ### Interface e Big Picture
 
 - Botões do launcher e da janela Sobre modernizados, com estados visuais aprimorados.
 - Capas do Big Picture com cantos arredondados alinhados ao quadro e sem brilho roxo indesejado.
 - Capturas do jogo ampliadas para 230 × 130, com cantos arredondados e abertura em tela ampliada preservada.
+- Botões de jogar e favoritar alinhados abaixo da capa; título, descrição e capturas compartilham o mesmo alinhamento.
 - Link do repositório centralizado para acompanhar a URL oficial do projeto.
 
 ### Site e distribuição
 
 - Carrossel de capturas reais colocado na área inicial do site, com navegação, troca automática e ampliação das imagens.
-- README, notas de versão e metadados sincronizados com a versão `2.11.2`.
+- README, notas de versão e metadados sincronizados com a versão `2.11.4`.
 - Instalador self-contained para `Windows x64`, compilado e validado com `.NET 8`.
 
 ### Recursos adicionados na versão 2.11.0
