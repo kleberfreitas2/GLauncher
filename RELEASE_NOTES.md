@@ -18,22 +18,25 @@
 
 ## 🆕 Novidades da versão 2.11.1
 
-Esta versão aprimora a experiência Big Picture e moderniza os botões do launcher. O site agora apresenta o carrossel de capturas na área inicial.
+Esta versão traz ajustes visuais e de apresentação, mantendo os recursos introduzidos na versão 2.11.0.
 
-### Assistente de IA
+### Interface e Big Picture
 
-- Seleção de provedor entre Groq, OpenAI e Gemini.
-- Configuração das chaves de API pelo usuário, protegidas localmente com DPAPI.
-- Assistente contextualizado para ajudar com o jogo selecionado, priorizando dicas de progressão e evitando spoilers desnecessários.
-- Mensagens de erro mais claras para problemas de chave, cota, modelo e conexão.
+- Botões do launcher e da janela Sobre modernizados, com estados visuais aprimorados.
+- Capas do Big Picture contidas no quadro, sem ultrapassar os limites dos cartões.
+- Link do repositório centralizado para acompanhar a URL oficial do projeto.
 
-### Big Picture e distribuição
+### Site e distribuição
 
-- Layout Big Picture refinado com capa, detalhes, screenshots, carrossel e comandos de controle melhor alinhados.
-- Transições de entrada e saída do Big Picture aprimoradas.
-- Configurações, documentação e instalador sincronizados com a versão `2.11.1`.
-- Instalador self-contained para `win-x64`.
-- Build `.NET 8` validado com sucesso.
+- Carrossel de capturas reais colocado na área inicial do site, com navegação, troca automática e ampliação das imagens.
+- README, notas de versão e metadados sincronizados com a versão `2.11.1`.
+- Instalador self-contained para `Windows x64`, compilado e validado com `.NET 8`.
+
+### Recursos adicionados na versão 2.11.0
+
+- Assistente de IA configurável com Groq, OpenAI e Gemini; chaves protegidas localmente com DPAPI.
+- Dicas contextualizadas para o jogo selecionado e mensagens de erro mais claras.
+- Experiência Big Picture com navegação por controle e transições aprimoradas.
 
 ---
 
