@@ -2404,8 +2404,13 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate>
-                                            <Border Width="160" Height="90" CornerRadius="9" Margin="0,0,12,0" ClipToBounds="True" BorderBrush="#668A9AB0" BorderThickness="1" Background="#202734">
-                                                <Image Source="{Binding}" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality" Cursor="Hand" MouseLeftButtonUp="Screenshot_Click"/>
+                                            <Border Width="230" Height="130" CornerRadius="12" Margin="0,0,12,0"
+                                                    BorderBrush="#668A9AB0" BorderThickness="1"
+                                                    RenderOptions.BitmapScalingMode="HighQuality" Cursor="Hand"
+                                                    MouseLeftButtonUp="Screenshot_Click">
+                                                <Border.Background>
+                                                    <ImageBrush ImageSource="{Binding}" Stretch="UniformToFill"/>
+                                                </Border.Background>
                                             </Border>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
@@ -2476,7 +2481,7 @@
                                 <Setter Property="Template">
                                     <Setter.Value>
                                         <ControlTemplate TargetType="ListBoxItem">
-                                            <Border x:Name="CardBorder" CornerRadius="14" BorderThickness="2" BorderBrush="Transparent" Background="#252A3440" ClipToBounds="True" RenderTransformOrigin="0.5,0.5">
+                                            <Border x:Name="CardBorder" CornerRadius="14" BorderThickness="1" BorderBrush="Transparent" Background="#252A3440" ClipToBounds="True" RenderTransformOrigin="0.5,0.5">
                                                 <Border.RenderTransform>
                                                     <ScaleTransform ScaleX="1" ScaleY="1"/>
                                                 </Border.RenderTransform>
@@ -2484,12 +2489,7 @@
                                             </Border>
                                             <ControlTemplate.Triggers>
                                                 <Trigger Property="IsSelected" Value="True">
-                                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#F2F5F9"/>
-                                                    <Setter TargetName="CardBorder" Property="Effect">
-                                                        <Setter.Value>
-                                                            <DropShadowEffect Color="#6AA9FF" BlurRadius="24" ShadowDepth="0" Opacity="0.75"/>
-                                                        </Setter.Value>
-                                                    </Setter>
+                                                    <Setter TargetName="CardBorder" Property="BorderBrush" Value="#28D6AD"/>
                                                     <Setter TargetName="CardBorder" Property="RenderTransform">
                                                         <Setter.Value>
                                                     <ScaleTransform ScaleX="1" ScaleY="1"/>

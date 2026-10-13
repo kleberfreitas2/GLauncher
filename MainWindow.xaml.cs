@@ -825,7 +825,7 @@ public partial class MainWindow : Window
 
     private void Screenshot_Click(object sender, MouseButtonEventArgs e)
     {
-        if (sender is not Image image || image.DataContext is not string screenshotUrl)
+        if (sender is not FrameworkElement element || element.DataContext is not string screenshotUrl)
             return;
 
         if (DataContext is not MainViewModel vm || vm.DetailGame?.Screenshots is not { Count: > 0 } screenshots)
