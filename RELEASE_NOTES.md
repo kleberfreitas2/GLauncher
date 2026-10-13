@@ -2,13 +2,13 @@
 
 <img src="Assets/icon.png" width="80" alt="GLauncher"/>
 
-# 🚀 GLauncher v2.11.0
+# 🚀 GLauncher v2.11.1
 
 ### Launcher de jogos estilo PS5 para PC
 
-[![Download GLauncher v2.11.0](https://img.shields.io/badge/⬇_DOWNLOAD_v2.11.0-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GLauncher/releases/latest)
+[![Download GLauncher v2.11.1](https://img.shields.io/badge/⬇_DOWNLOAD_v2.11.1-00E676?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/kleberfreitas2/GLauncher/releases/latest)
 
-> Baixe e execute o instalador `GLauncher_Setup_v2.11.0.exe`.
+> Baixe e execute o instalador `GLauncher_Setup_v2.11.1.exe`.
 >
 > Requer **Windows 10/11 (x64)** • [.NET 8 Runtime](https://dotnet.microsoft.com/download/dotnet/8.0)
 
@@ -16,9 +16,9 @@
 
 ---
 
-## 🆕 Novidades da versão 2.11.0
+## 🆕 Novidades da versão 2.11.1
 
-Esta versão adiciona um assistente de IA configurável e aprimora a experiência Big Picture, além de consolidar melhorias de estabilidade e distribuição.
+Esta versão aprimora a experiência Big Picture e moderniza os botões do launcher. O site agora apresenta o carrossel de capturas na área inicial.
 
 ### Assistente de IA
 
@@ -31,7 +31,7 @@ Esta versão adiciona um assistente de IA configurável e aprimora a experiênci
 
 - Layout Big Picture refinado com capa, detalhes, screenshots, carrossel e comandos de controle melhor alinhados.
 - Transições de entrada e saída do Big Picture aprimoradas.
-- Configurações, documentação e instalador sincronizados com a versão `2.11.0`.
+- Configurações, documentação e instalador sincronizados com a versão `2.11.1`.
 - Instalador self-contained para `win-x64`.
 - Build `.NET 8` validado com sucesso.
 

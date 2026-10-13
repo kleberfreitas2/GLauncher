@@ -13,6 +13,7 @@ public partial class AboutDialog : Window
     {
         InitializeComponent();
         VersionText.Text = $"Versão {AppInfo.Version}";
+        RepositoryLink.Text = AppInfo.GitHubUrl.Replace("https://", string.Empty);
         Closed += (_, _) => _updateService.Dispose();
         Loaded += async (_, _) =>
         {

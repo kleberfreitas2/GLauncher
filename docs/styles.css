@@ -43,6 +43,8 @@ h1, h2, h3, p { margin-top: 0; }
 .compatibility { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; color: #7f899d; font-size: 11px; }
 .compatibility .separator { color: var(--green); }
 .hero-art { min-height: 420px; position: relative; display: grid; place-items: center; perspective: 900px; }
+.hero-art .gallery-carousel { position: relative; z-index: 1; width: 100%; }
+.hero-art .gallery-stage { aspect-ratio: 16 / 10; min-height: 0; }
 .art-glow { position: absolute; width: 390px; height: 390px; border-radius: 50%; background: radial-gradient(circle, rgba(120, 86, 214, .34), rgba(40, 214, 173, .12) 44%, transparent 70%); filter: blur(22px); }
 .art-card { position: absolute; width: min(440px, 100%); height: 290px; overflow: hidden; border: 1px solid rgba(255,255,255,.14); border-radius: 19px; box-shadow: 0 36px 90px rgba(0,0,0,.45); }
 .art-card-back { display: flex; align-items: flex-end; padding: 27px; transform: translate(27px, 22px) rotate(5deg); background: linear-gradient(145deg, rgba(82, 57, 162, .94), rgba(17, 24, 42, .92) 55%, rgba(28, 149, 139, .62)); color: rgba(255,255,255,.72); font-size: 10px; font-weight: 800; letter-spacing: .2em; }
