@@ -190,6 +190,7 @@ public sealed class XboxLiveService : IDisposable
             return [];
 
         var games = new List<XboxLibraryGame>();
+        var seenGames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         const int pageSize = 100;
 
         for (var skip = 0; skip < 500; skip += pageSize)
@@ -198,7 +199,7 @@ public sealed class XboxLiveService : IDisposable
             {
                 var request = new HttpRequestMessage(HttpMethod.Get,
                     $"https://emerald.xboxservices.com/xboxcomfd/v3/gameCollection" +
-                    $"?CollectionType=MyGames&SkipItems={skip}&MaxItems={pageSize}&Filters=PcGame");
+                    $"?CollectionType=MyGames&SkipItems={skip}&MaxItems={pageSize}");
 
                 request.Headers.Add("Authorization", $"XBL3.0 x={_userHash};{_xstsToken}");
                 request.Headers.Add("x-xbl-contract-version", "4");
@@ -212,10 +213,17 @@ public sealed class XboxLiveService : IDisposable
                     var collection = JsonSerializer.Deserialize<GameCollectionResponse>(json);
                     var items = collection?.Items ?? [];
                     var previousCount = games.Count;
+                    foreach (var item in items)
+                    {
+                        if (string.IsNullOrWhiteSpace(item.Name))
+                            continue;
 
-                    games.AddRange(items
-                        .Where(item => !string.IsNullOrWhiteSpace(item.Name))
-                        .Select(item => new XboxLibraryGame(item.TitleId, item.Name)));
+                        var key = !string.IsNullOrWhiteSpace(item.TitleId)
+                            ? item.TitleId
+                            : $"name:{item.Name}";
+                        if (seenGames.Add(key))
+                            games.Add(new XboxLibraryGame(item.TitleId, item.Name));
+                    }
 
                     var total = collection?.TotalItemsCount ?? collection?.TotalItems;
                     if (items.Count == 0 || games.Count == previousCount || (total.HasValue && games.Count >= total.Value))
@@ -239,7 +247,7 @@ public sealed class XboxLiveService : IDisposable
         {
             var request = new HttpRequestMessage(HttpMethod.Get,
                 "https://emerald.xboxservices.com/xboxcomfd/v3/gameCollection" +
-                "?CollectionType=MyGames&SkipItems=0&MaxItems=1&Filters=PcGame");
+                "?CollectionType=MyGames&SkipItems=0&MaxItems=1");
 
             request.Headers.Add("Authorization", $"XBL3.0 x={_userHash};{_xstsToken}");
             request.Headers.Add("x-xbl-contract-version", "4");
