@@ -12,10 +12,13 @@ namespace GameLauncher.Views;
 
 public partial class PlatformLibraryDialog : Window
 {
+    private readonly IReadOnlyList<PlatformLibraryEntry> _entries;
     private readonly ICollectionView _gamesView;
     private readonly Action<PlatformLibraryEntry> _gameAction;
+    private readonly Func<Task>? _importAction;
     private readonly string? _clientUri;
     private readonly Action? _disconnectAction;
+    private bool _isImporting;
 
     public PlatformLibraryDialog(
         string platformName,
@@ -23,6 +26,7 @@ public partial class PlatformLibraryDialog : Window
         IEnumerable<PlatformLibraryEntry> games,
         string? clientUri,
         Action<PlatformLibraryEntry> gameAction,
+        Func<Task>? importAction = null,
         Action? disconnectAction = null,
         string? notice = null)
     {
@@ -32,16 +36,24 @@ public partial class PlatformLibraryDialog : Window
         NoticeText.Text = notice ?? string.Empty;
         _clientUri = clientUri;
         _gameAction = gameAction;
+        _importAction = importAction;
         _disconnectAction = disconnectAction;
 
-        var entries = new ObservableCollection<PlatformLibraryEntry>(games);
+        _entries = games.ToList();
+        var entries = new ObservableCollection<PlatformLibraryEntry>(_entries);
         _gamesView = CollectionViewSource.GetDefaultView(entries);
         _gamesView.Filter = FilterEntry;
         GamesItems.ItemsSource = _gamesView;
         RefreshCount();
+        foreach (var entry in _entries)
+            entry.PropertyChanged += Entry_PropertyChanged;
+        RefreshLibrarySummary();
 
         if (_disconnectAction is null)
             DisconnectButtonVisibility = Visibility.Collapsed;
+
+        if (_importAction is null)
+            ImportButton.Visibility = Visibility.Collapsed;
     }
 
     private Visibility DisconnectButtonVisibility
@@ -92,10 +104,58 @@ public partial class PlatformLibraryDialog : Window
         EmptyText.Visibility = count == 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
+    private void Entry_PropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(PlatformLibraryEntry.IsImported))
+            RefreshLibrarySummary();
+    }
+
+    private void RefreshLibrarySummary()
+    {
+        var installed = _entries.Count(game => game.IsInstalled);
+        var imported = _entries.Count(game => game.IsInstalled && game.IsImported);
+        var pending = installed - imported;
+        LibrarySummaryText.Text = $"{installed} instalados  •  {imported} no carrossel  •  {pending} para adicionar";
+
+        if (_importAction is null || _isImporting)
+            return;
+
+        ImportButton.IsEnabled = pending > 0;
+        ImportButton.Content = pending > 0
+            ? $"IMPORTAR {pending} PARA O CARROSSEL"
+            : installed > 0 ? "TUDO SINCRONIZADO" : "SEM JOGOS INSTALADOS";
+    }
+
     private void GameAction_Click(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.DataContext is PlatformLibraryEntry game)
             _gameAction(game);
+    }
+
+    private async void Import_Click(object sender, RoutedEventArgs e)
+    {
+        if (_importAction is null)
+            return;
+
+        _isImporting = true;
+        ImportButton.IsEnabled = false;
+        ImportButton.Content = "IMPORTANDO...";
+        NoticeText.Text = "Adicionando os jogos instalados ao carrossel...";
+
+        try
+        {
+            await _importAction();
+            NoticeText.Text = "Importação concluída. Os jogos já estão disponíveis no carrossel principal.";
+        }
+        catch (Exception ex)
+        {
+            NoticeText.Text = $"Não foi possível importar os jogos: {ex.Message}";
+        }
+        finally
+        {
+            _isImporting = false;
+            RefreshLibrarySummary();
+        }
     }
 
     private void OpenClient_Click(object sender, RoutedEventArgs e)

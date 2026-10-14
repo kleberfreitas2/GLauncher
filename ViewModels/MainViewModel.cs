@@ -859,9 +859,11 @@ private readonly DispatcherTimer _clockTimer;
 
     private async Task AutoFetchAllWithProgressAsync(Game game)
     {
+        var progressOwner = Application.Current.Windows.OfType<PlatformLibraryDialog>()
+            .FirstOrDefault(dialog => dialog.IsActive) ?? Application.Current.MainWindow;
         var progressDialog = new LoadingProgressDialog(game.DisplayName)
         {
-            Owner = Application.Current.MainWindow
+            Owner = progressOwner
         };
         progressDialog.Show();
 
@@ -1799,6 +1801,7 @@ private readonly DispatcherTimer _clockTimer;
                 PlatformId = item.TitleId,
                 Status = localGame is null ? "Disponível na biblioteca Xbox" : "Instalado",
                 IsInstalled = localGame is not null,
+                IsImported = IsGameInLibrary("Xbox", item.TitleId, item.Name, localGame),
                 InstalledGame = localGame,
                 ArtworkUrl = localGame?.CustomImagePath
             };
@@ -1812,6 +1815,7 @@ private readonly DispatcherTimer _clockTimer;
                 PlatformId = game.StoreAppId ?? string.Empty,
                 Status = "Instalado neste PC",
                 IsInstalled = true,
+                IsImported = IsGameInLibrary(game),
                 InstalledGame = game,
                 ArtworkUrl = game.CustomImagePath
             }));
@@ -1822,7 +1826,7 @@ private readonly DispatcherTimer _clockTimer;
                 LaunchGameCommand.Execute(entry.InstalledGame);
             else
                 OpenExternalUri($"ms-windows-store://search/?query={Uri.EscapeDataString(entry.Name)}");
-        }, async () =>
+        }, () => ImportXboxGames(), async () =>
         {
             await _xboxService!.LogoutAsync();
             XboxProfile = null;
@@ -2014,6 +2018,7 @@ private readonly DispatcherTimer _clockTimer;
                 PlatformId = game.AppId,
                 Status = localGame is null ? "Disponível na sua biblioteca" : "Instalado",
                 IsInstalled = localGame is not null,
+                IsImported = IsGameInLibrary("Steam", game.AppId, game.Name, localGame),
                 InstalledGame = localGame,
                 ArtworkUrl = localGame?.CustomImagePath
             };
@@ -2027,6 +2032,7 @@ private readonly DispatcherTimer _clockTimer;
                 PlatformId = game.StoreAppId ?? string.Empty,
                 Status = "Instalado neste PC",
                 IsInstalled = true,
+                IsImported = IsGameInLibrary(game),
                 InstalledGame = game,
                 ArtworkUrl = game.CustomImagePath
             }));
@@ -2039,7 +2045,7 @@ private readonly DispatcherTimer _clockTimer;
                 OpenExternalUri($"steam://install/{Uri.EscapeDataString(entry.PlatformId)}");
             else
                 OpenExternalUri($"https://store.steampowered.com/search/?term={Uri.EscapeDataString(entry.Name)}");
-        }, () =>
+        }, () => ImportSteamGames(), () =>
         {
             _steamService?.Disconnect();
             _steamService?.Dispose();
@@ -2195,6 +2201,7 @@ private readonly DispatcherTimer _clockTimer;
             PlatformId = game.StoreAppId ?? string.Empty,
             Status = "Instalado",
             IsInstalled = true,
+            IsImported = IsGameInLibrary(game),
             InstalledGame = game,
             ArtworkUrl = game.CustomImagePath
         }).ToList();
@@ -2207,7 +2214,7 @@ private readonly DispatcherTimer _clockTimer;
                 OpenExternalUri($"com.epicgames.launcher://apps/{Uri.EscapeDataString(entry.PlatformId)}?action=install&silent=true");
             else
                 OpenExternalUri($"https://store.epicgames.com/browse?q={Uri.EscapeDataString(entry.Name)}");
-        }, () =>
+        }, () => ImportEpicGames(), () =>
         {
             _epicService?.Disconnect();
             _epicService?.Dispose();
@@ -2219,17 +2226,50 @@ private readonly DispatcherTimer _clockTimer;
         }, "A integração Epic atual não autentica na conta: ela detecta somente jogos instalados neste PC. Para listar compras não instaladas, é necessário adicionar autenticação oficial à Epic. O cliente Epic é responsável pelo download e instalação.");
     }
 
+    private bool IsGameInLibrary(Game game) => Games.Any(existing =>
+        (!string.IsNullOrWhiteSpace(game.AppUserModelId) &&
+         existing.AppUserModelId?.Equals(game.AppUserModelId, StringComparison.OrdinalIgnoreCase) == true) ||
+        (!string.IsNullOrWhiteSpace(game.ExecutablePath) &&
+         existing.ExecutablePath.Equals(game.ExecutablePath, StringComparison.OrdinalIgnoreCase)) ||
+        (!string.IsNullOrWhiteSpace(game.StoreAppId) &&
+         existing.StoreAppId?.Equals(game.StoreAppId, StringComparison.OrdinalIgnoreCase) == true &&
+         existing.StorePlatform.Equals(game.StorePlatform, StringComparison.OrdinalIgnoreCase)));
+
+    private bool IsGameInLibrary(string platform, string platformId, string name, Game? installedGame)
+    {
+        if (installedGame is not null && IsGameInLibrary(installedGame))
+            return true;
+
+        var normalizedName = NormalizeGameTitle(name);
+        return Games.Any(existing =>
+            (!string.IsNullOrWhiteSpace(platformId) &&
+             existing.StoreAppId?.Equals(platformId, StringComparison.OrdinalIgnoreCase) == true &&
+             existing.StorePlatform.Equals(platform, StringComparison.OrdinalIgnoreCase)) ||
+            (NormalizeGameTitle(existing.DisplayName) == normalizedName &&
+             (existing.StorePlatform.Equals(platform, StringComparison.OrdinalIgnoreCase) ||
+              existing.PlatformSource.Contains(platform, StringComparison.OrdinalIgnoreCase))));
+    }
+
     private void ShowPlatformLibrary(
         string platform,
         string account,
         IEnumerable<PlatformLibraryEntry> entries,
         string clientUri,
         Action<PlatformLibraryEntry> gameAction,
+        Func<Task> importAction,
         Func<Task> disconnectAction,
         string notice)
     {
-        var dialog = new PlatformLibraryDialog(platform, account, entries, clientUri, gameAction,
-            () => _ = disconnectAction(), notice)
+        var platformEntries = entries.ToList();
+        async Task ImportAndRefreshAsync()
+        {
+            await importAction();
+            foreach (var entry in platformEntries)
+                entry.IsImported = IsGameInLibrary(entry.Platform, entry.PlatformId, entry.Name, entry.InstalledGame);
+        }
+
+        var dialog = new PlatformLibraryDialog(platform, account, platformEntries, clientUri, gameAction,
+            ImportAndRefreshAsync, () => _ = disconnectAction(), notice)
         {
             Owner = Application.Current.MainWindow
         };

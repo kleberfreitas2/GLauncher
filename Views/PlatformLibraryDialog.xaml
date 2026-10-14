@@ -5,6 +5,167 @@
         Title="Biblioteca de jogos" Width="1120" Height="760"
         MinWidth="820" MinHeight="560" WindowStartupLocation="CenterOwner"
         Background="#0D1117" Foreground="#F1F4F8">
+    <Window.Resources>
+        <LinearGradientBrush x:Key="GameActionGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#00E676" Offset="0"/>
+            <GradientStop Color="#00CFA8" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="GameActionHoverGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#48FF9A" Offset="0"/>
+            <GradientStop Color="#19E4C2" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="PlatformGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#7C4DFF" Offset="0"/>
+            <GradientStop Color="#3D8BFF" Offset="1"/>
+        </LinearGradientBrush>
+        <LinearGradientBrush x:Key="PlatformHoverGradient" StartPoint="0,0" EndPoint="1,1">
+            <GradientStop Color="#9B7BFF" Offset="0"/>
+            <GradientStop Color="#56A8FF" Offset="1"/>
+        </LinearGradientBrush>
+
+        <Style x:Key="GameActionButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="{StaticResource GameActionGradient}"/>
+            <Setter Property="Foreground" Value="#07140F"/>
+            <Setter Property="BorderThickness" Value="0"/>
+            <Setter Property="Padding" Value="14,8"/>
+            <Setter Property="MinHeight" Value="40"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                                BorderBrush="#44FFFFFF" BorderThickness="1" CornerRadius="18"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform>
+                                <ScaleTransform ScaleX="1" ScaleY="1"/>
+                            </Border.RenderTransform>
+                            <Border.Effect>
+                                <DropShadowEffect Color="#00E676" BlurRadius="14" ShadowDepth="0" Opacity="0.24"/>
+                            </Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                                              Margin="8,0" RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="{StaticResource GameActionHoverGradient}"/>
+                                <Setter TargetName="Surface" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="1.035" ScaleY="1.035"/></Setter.Value>
+                                </Setter>
+                                <Setter TargetName="Surface" Property="Effect">
+                                    <Setter.Value><DropShadowEffect Color="#00E676" BlurRadius="20" ShadowDepth="0" Opacity="0.52"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="0.97" ScaleY="0.97"/></Setter.Value>
+                                </Setter>
+                                <Setter TargetName="Surface" Property="Effect">
+                                    <Setter.Value><DropShadowEffect Color="#00E676" BlurRadius="8" ShadowDepth="0" Opacity="0.35"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="White"/>
+                                <Setter TargetName="Surface" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Surface" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="PlatformButtonStyle" TargetType="Button" BasedOn="{StaticResource GameActionButtonStyle}">
+            <Setter Property="Background" Value="{StaticResource PlatformGradient}"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="MinHeight" Value="42"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                                BorderBrush="#55FFFFFF" BorderThickness="1" CornerRadius="21"
+                                RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform><ScaleTransform ScaleX="1" ScaleY="1"/></Border.RenderTransform>
+                            <Border.Effect><DropShadowEffect Color="#7C4DFF" BlurRadius="14" ShadowDepth="0" Opacity="0.32"/></Border.Effect>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,0"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="{StaticResource PlatformHoverGradient}"/>
+                                <Setter TargetName="Surface" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="1.035" ScaleY="1.035"/></Setter.Value>
+                                </Setter>
+                                <Setter TargetName="Surface" Property="Effect">
+                                    <Setter.Value><DropShadowEffect Color="#7C4DFF" BlurRadius="22" ShadowDepth="0" Opacity="0.58"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="0.97" ScaleY="0.97"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="White"/>
+                                <Setter TargetName="Surface" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Surface" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="DisconnectButtonStyle" TargetType="Button" BasedOn="{StaticResource GameActionButtonStyle}">
+            <Setter Property="Background" Value="#1B202B"/>
+            <Setter Property="Foreground" Value="#FF8A9A"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="BorderBrush" Value="#563442"/>
+            <Setter Property="MinHeight" Value="42"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Surface" Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}"
+                                CornerRadius="21" RenderTransformOrigin="0.5,0.5">
+                            <Border.RenderTransform><ScaleTransform ScaleX="1" ScaleY="1"/></Border.RenderTransform>
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" Margin="8,0"
+                                              RecognizesAccessKey="True"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Surface" Property="Background" Value="#38212C"/>
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="#FF647F"/>
+                                <Setter TargetName="Surface" Property="Effect">
+                                    <Setter.Value><DropShadowEffect Color="#FF4568" BlurRadius="16" ShadowDepth="0" Opacity="0.4"/></Setter.Value>
+                                </Setter>
+                                <Setter TargetName="Surface" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="1.025" ScaleY="1.025"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter TargetName="Surface" Property="RenderTransform">
+                                    <Setter.Value><ScaleTransform ScaleX="0.97" ScaleY="0.97"/></Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsKeyboardFocused" Value="True">
+                                <Setter TargetName="Surface" Property="BorderBrush" Value="White"/>
+                                <Setter TargetName="Surface" Property="BorderThickness" Value="2"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Surface" Property="Opacity" Value="0.45"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
     <Grid Margin="26">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -21,12 +182,17 @@
             <StackPanel>
                 <TextBlock x:Name="PlatformTitle" FontSize="28" FontWeight="Bold" Foreground="White"/>
                 <TextBlock x:Name="AccountText" FontSize="13" Foreground="#91A0B2" Margin="0,5,0,0"/>
+                <TextBlock x:Name="LibrarySummaryText" FontSize="12" FontWeight="SemiBold"
+                           Foreground="#56E6A5" Margin="0,8,0,0"/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="ABRIR PLATAFORMA" Click="OpenClient_Click" Padding="12,8" Margin="0,0,8,0"
-                        MinHeight="38" MinWidth="138" FontSize="11" VerticalContentAlignment="Center"/>
+                <Button x:Name="ImportButton" Content="IMPORTAR INSTALADOS" Click="Import_Click"
+                        Style="{StaticResource GameActionButtonStyle}" Padding="12,8"
+                        Margin="0,0,10,0" MinWidth="185" FontSize="10"/>
+                <Button Content="ABRIR PLATAFORMA" Click="OpenClient_Click" Style="{StaticResource PlatformButtonStyle}"
+                        Padding="14,8" Margin="0,0,10,0" MinWidth="146" FontSize="11"/>
                 <Button x:Name="DisconnectButton" Content="DESCONECTAR" Click="Disconnect_Click" Padding="12,8"
-                        Foreground="#FF7777" MinHeight="38" MinWidth="112" FontSize="11" VerticalContentAlignment="Center"/>
+                        Style="{StaticResource DisconnectButtonStyle}" MinWidth="120" FontSize="11"/>
             </StackPanel>
         </Grid>
 
@@ -72,15 +238,64 @@
                                             <md:PackIcon Kind="GamepadVariant" Width="42" Height="42" Foreground="#65758A"
                                                          HorizontalAlignment="Center" VerticalAlignment="Center"/>
                                             <Image Source="{Binding ArtworkUrl}" Stretch="UniformToFill"/>
+                                            <Border Width="34" Height="34" Margin="9" CornerRadius="17"
+                                                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                                                    ToolTip="{Binding SyncStatusText}">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="#E6F04462"/>
+                                                        <Setter Property="Effect">
+                                                            <Setter.Value><DropShadowEffect Color="#FF3F5D" BlurRadius="12" ShadowDepth="0" Opacity="0.45"/></Setter.Value>
+                                                        </Setter>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding IsImported}" Value="True">
+                                                                <Setter Property="Background" Value="#E600D68A"/>
+                                                                <Setter Property="Effect">
+                                                                    <Setter.Value><DropShadowEffect Color="#00E676" BlurRadius="12" ShadowDepth="0" Opacity="0.5"/></Setter.Value>
+                                                                </Setter>
+                                                            </DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <Grid>
+                                                    <md:PackIcon Kind="Close" Width="17" Height="17"
+                                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                 Foreground="White">
+                                                        <md:PackIcon.Style>
+                                                            <Style TargetType="md:PackIcon">
+                                                                <Setter Property="Visibility" Value="Visible"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsImported}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </md:PackIcon.Style>
+                                                    </md:PackIcon>
+                                                    <md:PackIcon Kind="Check" Width="18" Height="18"
+                                                                 HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                                 Foreground="White">
+                                                        <md:PackIcon.Style>
+                                                            <Style TargetType="md:PackIcon">
+                                                                <Setter Property="Visibility" Value="Collapsed"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsImported}" Value="True">
+                                                                        <Setter Property="Visibility" Value="Visible"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </md:PackIcon.Style>
+                                                    </md:PackIcon>
+                                                </Grid>
+                                            </Border>
                                         </Grid>
                                     </Border>
                                     <StackPanel Grid.Row="1" Margin="12,10,12,10">
                                         <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
                                                    Foreground="White" TextWrapping="Wrap" TextTrimming="CharacterEllipsis" MaxHeight="34"/>
                                         <TextBlock Text="{Binding Status}" FontSize="10" Foreground="#91A0B2" Margin="0,5,0,8"/>
-                                        <Button Content="{Binding ActionText}" Click="GameAction_Click" Padding="8,6"
-                                                HorizontalAlignment="Stretch" MinHeight="38" VerticalContentAlignment="Center"
-                                                Background="#00C878" Foreground="#07140F" FontSize="12" FontWeight="Bold"/>
+                                        <Button Content="{Binding ActionText}" Click="GameAction_Click"
+                                                Style="{StaticResource GameActionButtonStyle}" HorizontalAlignment="Stretch"/>
                                     </StackPanel>
                                 </Grid>
                             </Border>
