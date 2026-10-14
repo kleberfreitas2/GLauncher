@@ -1,0 +1,7 @@
+name = "glauncher-steam-proxy"
+main = "src/index.js"
+compatibility_date = "2025-03-30"
+workers_dev = true
+
+[observability]
+enabled = true
