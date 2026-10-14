@@ -22,6 +22,7 @@ packages/
 # Publish output
 publish/
 **/publish/
+Installer/Output/
 
 # Test results
 TestResults/
