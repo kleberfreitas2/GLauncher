@@ -1777,46 +1777,58 @@ private readonly DispatcherTimer _clockTimer;
         if (!IsXboxLoggedIn || XboxProfile is null)
         {
             await XboxLogin();
-            return;
+            if (!IsXboxLoggedIn || XboxProfile is null)
+                return;
         }
 
-        var importedCount = Games.Count(g =>
-            g.InstallDirectory is not null &&
-            g.InstallDirectory.Contains("XboxGames", StringComparison.OrdinalIgnoreCase));
-
-        var availableCount = 0;
-        if (_xboxService is not null)
+        StatusMessage = "Carregando biblioteca Xbox...";
+        var library = await _xboxService!.GetLibraryGamesAsync();
+        var installed = await Task.Run(() => _xboxService.ScanXboxInstalledGames());
+        var installedByName = installed
+            .GroupBy(game => game.Name, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var listedNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var entries = library.Select(item =>
         {
-            availableCount = await _xboxService.GetLibraryGamesCountAsync();
-        }
-
-        var dialog = new XboxProfileDialog(XboxProfile, importedCount, availableCount)
-        {
-            Owner = Application.Current.MainWindow
-        };
-
-        IsProfileDialogOpen = true;
-        ProfileDialogNavigate = dialog.HandleGamepadInput;
-
-        if (dialog.ShowDialog() == true)
-        {
-            if (dialog.LogoutRequested)
+            listedNames.Add(item.Name);
+            installedByName.TryGetValue(item.Name, out var localGame);
+            return new PlatformLibraryEntry
             {
-                if (_xboxService is not null)
-                    await _xboxService.LogoutAsync();
-
-                XboxProfile = null;
-                XboxConnected = false;
-                StatusMessage = "Desconectado do Xbox Live.";
-            }
-            else if (dialog.ImportGamesRequested)
+                Name = item.Name,
+                Platform = "Xbox",
+                PlatformId = item.TitleId,
+                Status = localGame is null ? "Disponível na biblioteca Xbox" : "Instalado",
+                IsInstalled = localGame is not null,
+                InstalledGame = localGame,
+                ArtworkUrl = localGame?.CustomImagePath
+            };
+        }).ToList();
+        entries.AddRange(installed
+            .Where(game => !listedNames.Contains(game.Name))
+            .Select(game => new PlatformLibraryEntry
             {
-                await ImportXboxGames();
-            }
-        }
+                Name = game.DisplayName,
+                Platform = "Xbox",
+                PlatformId = game.StoreAppId ?? string.Empty,
+                Status = "Instalado neste PC",
+                IsInstalled = true,
+                InstalledGame = game,
+                ArtworkUrl = game.CustomImagePath
+            }));
 
-        IsProfileDialogOpen = false;
-        ProfileDialogNavigate = null;
+        ShowPlatformLibrary("Xbox", XboxProfile.Gamertag, entries, "ms-windows-store:", entry =>
+        {
+            if (entry.InstalledGame is not null)
+                LaunchGameCommand.Execute(entry.InstalledGame);
+            else
+                OpenExternalUri($"ms-windows-store://search/?query={Uri.EscapeDataString(entry.Name)}");
+        }, async () =>
+        {
+            await _xboxService!.LogoutAsync();
+            XboxProfile = null;
+            XboxConnected = false;
+            StatusMessage = "Desconectado do Xbox Live.";
+        }, "Os jogos disponíveis são encaminhados à Microsoft Store/Xbox para instalação.");
     }
 
     [RelayCommand]
@@ -1966,45 +1978,81 @@ private readonly DispatcherTimer _clockTimer;
         if (!IsSteamConnected || SteamProfile is null)
         {
             await SteamLogin();
-            return;
+            if (!IsSteamConnected || SteamProfile is null)
+                return;
         }
 
-        var importedCount = Games.Count(g =>
-            g.InstallDirectory is not null &&
-            g.InstallDirectory.Contains("steamapps", StringComparison.OrdinalIgnoreCase));
-
-        var availableCount = SteamProfile.OwnedGamesCount;
-
-        var dialog = new SteamProfileDialog(SteamProfile, importedCount, availableCount)
+        StatusMessage = "Carregando biblioteca Steam...";
+        var installed = await Task.Run(() => _steamService!.ScanSteamInstalledGames());
+        var proxyUrl = SettingsService.Current.SteamLibraryProxyUrl;
+        var owned = string.IsNullOrWhiteSpace(proxyUrl)
+            ? await _steamService!.GetOwnedGamesAsync(SettingsService.Current.SteamApiKey)
+            : await _steamService!.GetOwnedGamesViaProxyAsync(proxyUrl);
+        if (string.IsNullOrWhiteSpace(proxyUrl) && _steamService.IsOwnedGamesApiKeyRejected)
         {
-            Owner = Application.Current.MainWindow
-        };
-
-        IsProfileDialogOpen = true;
-        ProfileDialogNavigate = dialog.HandleGamepadInput;
-
-        if (dialog.ShowDialog() == true)
-        {
-            if (dialog.LogoutRequested)
+            var keyDialog = new SteamApiKeyDialog { Owner = Application.Current.MainWindow };
+            if (keyDialog.ShowDialog() == true)
             {
-                _steamService?.Disconnect();
-                _steamService?.Dispose();
-                _steamService = null;
-
-                SteamProfile = null;
-                SteamConnected = false;
-                SettingsService.Current.SteamId = string.Empty;
+                SettingsService.Current.SteamApiKey = keyDialog.ApiKey;
                 SettingsService.Save();
-                StatusMessage = "Desconectado da Steam.";
-            }
-            else if (dialog.ImportGamesRequested)
-            {
-                await ImportSteamGames();
+                owned = await _steamService.GetOwnedGamesAsync(SettingsService.Current.SteamApiKey);
             }
         }
+        var installedById = installed
+            .Where(game => !string.IsNullOrWhiteSpace(game.StoreAppId))
+            .GroupBy(game => game.StoreAppId!, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(group => group.Key, group => group.First(), StringComparer.OrdinalIgnoreCase);
+        var includedIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var entries = owned.Select(game =>
+        {
+            includedIds.Add(game.AppId);
+            installedById.TryGetValue(game.AppId, out var localGame);
+            return new PlatformLibraryEntry
+            {
+                Name = game.Name,
+                Platform = "Steam",
+                PlatformId = game.AppId,
+                Status = localGame is null ? "Disponível na sua biblioteca" : "Instalado",
+                IsInstalled = localGame is not null,
+                InstalledGame = localGame,
+                ArtworkUrl = localGame?.CustomImagePath
+            };
+        }).ToList();
+        entries.AddRange(installed
+            .Where(game => string.IsNullOrWhiteSpace(game.StoreAppId) || !includedIds.Contains(game.StoreAppId))
+            .Select(game => new PlatformLibraryEntry
+            {
+                Name = game.DisplayName,
+                Platform = "Steam",
+                PlatformId = game.StoreAppId ?? string.Empty,
+                Status = "Instalado neste PC",
+                IsInstalled = true,
+                InstalledGame = game,
+                ArtworkUrl = game.CustomImagePath
+            }));
 
-        IsProfileDialogOpen = false;
-        ProfileDialogNavigate = null;
+        ShowPlatformLibrary("Steam", SteamProfile.PersonaName, entries, "steam://open/main", entry =>
+        {
+            if (entry.InstalledGame is not null)
+                LaunchGameCommand.Execute(entry.InstalledGame);
+            else if (!string.IsNullOrWhiteSpace(entry.PlatformId))
+                OpenExternalUri($"steam://install/{Uri.EscapeDataString(entry.PlatformId)}");
+            else
+                OpenExternalUri($"https://store.steampowered.com/search/?term={Uri.EscapeDataString(entry.Name)}");
+        }, () =>
+        {
+            _steamService?.Disconnect();
+            _steamService?.Dispose();
+            _steamService = null;
+            SteamProfile = null;
+            SteamConnected = false;
+            SettingsService.Current.SteamId = string.Empty;
+            SettingsService.Save();
+            StatusMessage = "Desconectado da Steam.";
+            return Task.CompletedTask;
+        }, owned.Count > 0
+            ? "A opção BAIXAR abre a instalação pelo cliente oficial da Steam."
+            : $"A lista completa da Steam não foi carregada: {_steamService.LastOwnedGamesError ?? "nenhum detalhe informado"} Os jogos instalados detectados ainda são exibidos.");
     }
 
     [RelayCommand]
@@ -2134,44 +2182,139 @@ private readonly DispatcherTimer _clockTimer;
         if (!IsEpicConnected || EpicProfile is null)
         {
             await EpicLogin();
-            return;
+            if (!IsEpicConnected || EpicProfile is null)
+                return;
         }
 
-        var importedCount = Games.Count(g =>
-            g.InstallDirectory is not null &&
-            (g.InstallDirectory.Contains("Epic Games", StringComparison.OrdinalIgnoreCase) ||
-             g.InstallDirectory.Contains("Epic", StringComparison.OrdinalIgnoreCase)));
+        StatusMessage = "Carregando biblioteca Epic...";
+        var installed = await Task.Run(() => _epicService!.ScanEpicInstalledGames());
+        var entries = installed.Select(game => new PlatformLibraryEntry
+        {
+            Name = game.DisplayName,
+            Platform = "Epic",
+            PlatformId = game.StoreAppId ?? string.Empty,
+            Status = "Instalado",
+            IsInstalled = true,
+            InstalledGame = game,
+            ArtworkUrl = game.CustomImagePath
+        }).ToList();
 
-        var availableCount = EpicProfile.InstalledGamesCount;
+        ShowPlatformLibrary("Epic Games", EpicProfile.DisplayName, entries, "com.epicgames.launcher://", entry =>
+        {
+            if (entry.InstalledGame is not null)
+                LaunchGameCommand.Execute(entry.InstalledGame);
+            else if (!string.IsNullOrWhiteSpace(entry.PlatformId))
+                OpenExternalUri($"com.epicgames.launcher://apps/{Uri.EscapeDataString(entry.PlatformId)}?action=install&silent=true");
+            else
+                OpenExternalUri($"https://store.epicgames.com/browse?q={Uri.EscapeDataString(entry.Name)}");
+        }, () =>
+        {
+            _epicService?.Disconnect();
+            _epicService?.Dispose();
+            _epicService = null;
+            EpicProfile = null;
+            EpicConnected = false;
+            StatusMessage = "Desconectado da Epic Games.";
+            return Task.CompletedTask;
+        }, "A integração Epic atual não autentica na conta: ela detecta somente jogos instalados neste PC. Para listar compras não instaladas, é necessário adicionar autenticação oficial à Epic. O cliente Epic é responsável pelo download e instalação.");
+    }
 
-        var dialog = new EpicProfileDialog(EpicProfile, importedCount, availableCount)
+    private void ShowPlatformLibrary(
+        string platform,
+        string account,
+        IEnumerable<PlatformLibraryEntry> entries,
+        string clientUri,
+        Action<PlatformLibraryEntry> gameAction,
+        Func<Task> disconnectAction,
+        string notice)
+    {
+        var dialog = new PlatformLibraryDialog(platform, account, entries, clientUri, gameAction,
+            () => _ = disconnectAction(), notice)
         {
             Owner = Application.Current.MainWindow
         };
+        dialog.ContentRendered += async (_, _) => await LoadPlatformArtworkAsync(entries);
 
         IsProfileDialogOpen = true;
         ProfileDialogNavigate = dialog.HandleGamepadInput;
-
-        if (dialog.ShowDialog() == true)
-        {
-            if (dialog.LogoutRequested)
-            {
-                _epicService?.Disconnect();
-                _epicService?.Dispose();
-                _epicService = null;
-
-                EpicProfile = null;
-                EpicConnected = false;
-                StatusMessage = "Desconectado da Epic Games.";
-            }
-            else if (dialog.ImportGamesRequested)
-            {
-                await ImportEpicGames();
-            }
-        }
-
+        dialog.ShowDialog();
         IsProfileDialogOpen = false;
         ProfileDialogNavigate = null;
+    }
+
+    private async Task LoadPlatformArtworkAsync(IEnumerable<PlatformLibraryEntry> entries)
+    {
+        var apiKey = SettingsService.Current.SteamGridDbApiKey;
+        var clientId = SettingsService.Current.IgdbClientId;
+        var clientSecret = SettingsService.Current.IgdbClientSecret;
+        if (string.IsNullOrWhiteSpace(apiKey) &&
+            (string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret)))
+            return;
+
+        using var service = string.IsNullOrWhiteSpace(apiKey) ? null : new SteamGridDbService(apiKey);
+        using var igdb = string.IsNullOrWhiteSpace(clientId) || string.IsNullOrWhiteSpace(clientSecret)
+            ? null
+            : new IgdbService(clientId, clientSecret);
+        foreach (var entry in entries)
+        {
+            if (!string.IsNullOrWhiteSpace(entry.ArtworkUrl) && File.Exists(entry.ArtworkUrl))
+                continue;
+
+            var normalizedName = NormalizeGameTitle(entry.Name);
+            if (service is not null)
+            {
+                var matches = await service.SearchGamesAsync(entry.Name);
+                var exactMatch = matches.FirstOrDefault(game => NormalizeGameTitle(game.Name) == normalizedName);
+                if (exactMatch is not null)
+                {
+                    var covers = await service.GetCoversAsync(exactMatch.Id);
+                    if (covers.Count > 0)
+                    {
+                        var sgdbPath = await service.DownloadCoverAsync(covers[0].Url, entry.Name);
+                        if (sgdbPath is not null)
+                        {
+                            entry.ArtworkUrl = sgdbPath;
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            if (igdb is null)
+                continue;
+
+            var igdbMatches = await igdb.SearchGamesAsync(entry.Name);
+            var igdbMatch = igdbMatches.FirstOrDefault(game => NormalizeGameTitle(game.Name) == normalizedName);
+            if (igdbMatch?.CoverUrl is not { Length: > 0 } coverUrl)
+                continue;
+
+            var igdbPath = await igdb.DownloadCoverAsync(coverUrl, entry.Name);
+            if (igdbPath is not null)
+                entry.ArtworkUrl = igdbPath;
+        }
+    }
+
+    private static string NormalizeGameTitle(string value)
+    {
+        var normalized = value.Normalize(NormalizationForm.FormD);
+        return new string(normalized
+            .Where(character => CharUnicodeInfo.GetUnicodeCategory(character) != UnicodeCategory.NonSpacingMark)
+            .Where(char.IsLetterOrDigit)
+            .Select(char.ToLowerInvariant)
+            .ToArray());
+    }
+
+    private static void OpenExternalUri(string uri)
+    {
+        try
+        {
+            Process.Start(new ProcessStartInfo(uri) { UseShellExecute = true });
+        }
+        catch (Exception ex)
+        {
+            MessageBox.Show($"Não foi possível abrir o cliente da plataforma: {ex.Message}",
+                "Plataforma", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
     }
 
     [RelayCommand]

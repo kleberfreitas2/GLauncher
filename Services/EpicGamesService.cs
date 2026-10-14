@@ -242,7 +242,9 @@ public sealed class EpicGamesService : IDisposable
                     Name = gameName,
                     ExecutablePath = mainExe.FullName,
                     InstallDirectory = manifest.InstallLocation,
-                    IconPath = IconExtractor.ExtractIcon(mainExe.FullName)
+                    IconPath = IconExtractor.ExtractIcon(mainExe.FullName),
+                    StorePlatform = "Epic",
+                    StoreAppId = manifest.AppName
                 });
             }
             catch { }

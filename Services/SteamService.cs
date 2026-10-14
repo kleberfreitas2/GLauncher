@@ -1,5 +1,6 @@
 using System.IO;
 using System.Net.Http;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
 using GameLauncher.Models;
@@ -14,6 +15,8 @@ public sealed partial class SteamService : IDisposable
 
     public bool IsConnected => _steamId is not null;
     public string? SteamId => _steamId;
+    public string? LastOwnedGamesError { get; private set; }
+    public bool IsOwnedGamesApiKeyRejected { get; private set; }
 
     public SteamService()
     {
@@ -169,6 +172,88 @@ public sealed partial class SteamService : IDisposable
         }
     }
 
+    public async Task<List<SteamOwnedGame>> GetOwnedGamesAsync(string apiKey)
+    {
+        if (string.IsNullOrWhiteSpace(_steamId) || string.IsNullOrWhiteSpace(apiKey))
+        {
+            LastOwnedGamesError = "Steam ID ou chave da API não configurados.";
+            return [];
+        }
+
+        var url = "https://api.steampowered.com/IPlayerService/GetOwnedGames/v1/" +
+                  $"?key={Uri.EscapeDataString(apiKey)}&steamid={Uri.EscapeDataString(_steamId)}" +
+                  "&include_appinfo=true&include_played_free_games=true&format=json";
+        return await FetchOwnedGamesAsync(url, directSteamApi: true);
+    }
+
+    public async Task<List<SteamOwnedGame>> GetOwnedGamesViaProxyAsync(string proxyBaseUrl)
+    {
+        if (string.IsNullOrWhiteSpace(_steamId) || !Uri.TryCreate(proxyBaseUrl, UriKind.Absolute, out var baseUri) ||
+            baseUri.Scheme is not ("https" or "http"))
+        {
+            LastOwnedGamesError = "A URL do serviço Steam compartilhado não está configurada corretamente.";
+            return [];
+        }
+
+        var normalizedBaseUri = new Uri(baseUri.ToString().TrimEnd('/') + "/", UriKind.Absolute);
+        var endpoint = new Uri(normalizedBaseUri, $"api/steam/{Uri.EscapeDataString(_steamId)}/games");
+        return await FetchOwnedGamesAsync(endpoint.ToString(), directSteamApi: false);
+    }
+
+    private async Task<List<SteamOwnedGame>> FetchOwnedGamesAsync(string url, bool directSteamApi)
+    {
+        LastOwnedGamesError = null;
+        IsOwnedGamesApiKeyRejected = false;
+        try
+        {
+            using var response = await _http.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+
+            if (!document.RootElement.TryGetProperty("response", out var responseElement) ||
+                !responseElement.TryGetProperty("games", out var gamesElement) ||
+                gamesElement.ValueKind != JsonValueKind.Array)
+            {
+                LastOwnedGamesError = "O serviço não retornou a coleção de jogos em um formato reconhecido.";
+                return [];
+            }
+
+            var games = gamesElement.EnumerateArray()
+                .Select(game => new SteamOwnedGame(
+                    game.TryGetProperty("appid", out var appId) ? appId.ToString() : string.Empty,
+                    game.TryGetProperty("name", out var name) ? name.GetString() ?? string.Empty : string.Empty,
+                    game.TryGetProperty("img_icon_url", out var icon) ? icon.GetString() ?? string.Empty : string.Empty))
+                .Where(game => !string.IsNullOrWhiteSpace(game.AppId) && !string.IsNullOrWhiteSpace(game.Name))
+                .ToList();
+
+            if (games.Count == 0)
+                LastOwnedGamesError = "A Steam retornou zero jogos. Confira se os detalhes de jogos do perfil estão públicos.";
+
+            return games;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.Unauthorized && directSteamApi)
+        {
+            IsOwnedGamesApiKeyRejected = true;
+            LastOwnedGamesError = "A chave API Steam foi rejeitada (401 Unauthorized).";
+            return [];
+        }
+        catch (HttpRequestException ex)
+        {
+            LastOwnedGamesError = $"Falha ao consultar o serviço da Steam: {ex.Message}";
+            return [];
+        }
+        catch (JsonException ex)
+        {
+            LastOwnedGamesError = $"A resposta do serviço da Steam não pôde ser interpretada: {ex.Message}";
+            return [];
+        }
+        catch (Exception ex)
+        {
+            LastOwnedGamesError = $"Falha ao carregar a biblioteca Steam: {ex.Message}";
+            return [];
+        }
+    }
+
     public List<Game> ScanSteamInstalledGames()
     {
         var games = new List<Game>();
@@ -205,14 +290,17 @@ public sealed partial class SteamService : IDisposable
                     foundPaths.Add(mainExe.FullName);
 
                     var folderName = Path.GetFileName(gameDir);
-                    var gameName = manifests.GetValueOrDefault(folderName, folderName);
+                    var manifest = manifests.GetValueOrDefault(folderName);
+                    var gameName = manifest.Name ?? folderName;
 
                     games.Add(new Game
                     {
                         Name = gameName,
                         ExecutablePath = mainExe.FullName,
                         InstallDirectory = gameDir,
-                        IconPath = IconExtractor.ExtractIcon(mainExe.FullName)
+                        IconPath = IconExtractor.ExtractIcon(mainExe.FullName),
+                        StorePlatform = "Steam",
+                        StoreAppId = manifest.AppId
                     });
                 }
                 catch { }
@@ -354,9 +442,9 @@ public sealed partial class SteamService : IDisposable
         return folders;
     }
 
-    private static Dictionary<string, string> ParseAcfManifests(string steamAppsDir)
+    private static Dictionary<string, (string? Name, string? AppId)> ParseAcfManifests(string steamAppsDir)
     {
-        var map = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var map = new Dictionary<string, (string? Name, string? AppId)>(StringComparer.OrdinalIgnoreCase);
 
         try
         {
@@ -367,10 +455,13 @@ public sealed partial class SteamService : IDisposable
                     var content = File.ReadAllText(acfFile);
                     var nameMatch = AcfNameRegex().Match(content);
                     var dirMatch = AcfInstallDirRegex().Match(content);
+                    var appIdMatch = AcfAppIdRegex().Match(content);
 
                     if (nameMatch.Success && dirMatch.Success)
                     {
-                        map[dirMatch.Groups[1].Value] = nameMatch.Groups[1].Value;
+                        map[dirMatch.Groups[1].Value] = (
+                            nameMatch.Groups[1].Value,
+                            appIdMatch.Success ? appIdMatch.Groups[1].Value : null);
                     }
                 }
                 catch { }
@@ -412,6 +503,9 @@ public sealed partial class SteamService : IDisposable
 
     [GeneratedRegex(@"""installdir""\s+""([^""]+)""")]
     private static partial Regex AcfInstallDirRegex();
+
+    [GeneratedRegex(@"""appid""\s+""(\d+)""")]
+    private static partial Regex AcfAppIdRegex();
 
     [GeneratedRegex(@"""(7656\d{13})""")]
     private static partial Regex LoginUserIdRegex();

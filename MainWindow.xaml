@@ -1801,29 +1801,6 @@
                                 </DataTemplate>
                             </ListBox.ItemTemplate>
                         </ListBox>
-                        <Border Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Bottom"
-                                 Margin="0,0,54,-6" Padding="7,3"
-                                 Background="#0A0A14" BorderBrush="#334455" BorderThickness="1"
-                                 CornerRadius="8" IsHitTestVisible="False" RenderTransformOrigin="0.5,0.5" Height="25" Width="334">
-                            <Border.RenderTransform>
-                                <TransformGroup>
-                                    <ScaleTransform/>
-                                    <SkewTransform/>
-                                    <RotateTransform Angle="0.161"/>
-                                    <TranslateTransform/>
-                                </TransformGroup>
-                            </Border.RenderTransform>
-                            <StackPanel Orientation="Horizontal">
-                                <md:PackIcon Kind="DotsVertical" Width="11" Height="11"
-                                              Foreground="#00E676" VerticalAlignment="Center" Margin="0,0,4,0"/>
-                                <TextBlock FontSize="8" Foreground="White" VerticalAlignment="Center" Height="11" Width="295">
-                                     <Run Text="Para menu de opções pressione: " FontWeight="SemiBold"/>
-                                     <Run Text="Mouse: botão direito" FontWeight="SemiBold"/>
-                                     <Run Text="  •  Xbox: pressione " Foreground="#D5D9E0"/>
-                                     <Run Text="Y" FontWeight="Bold" Foreground="#00E676"/>
-                                </TextBlock>
-                            </StackPanel>
-                        </Border>
                     </Grid>
                 </Border>
 

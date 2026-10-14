@@ -184,6 +184,55 @@ public sealed class XboxLiveService : IDisposable
         return await GetTitleHubPcGamesCountAsync();
     }
 
+    public async Task<List<XboxLibraryGame>> GetLibraryGamesAsync()
+    {
+        if (!IsLoggedIn || _xuid is null)
+            return [];
+
+        var games = new List<XboxLibraryGame>();
+        const int pageSize = 100;
+
+        for (var skip = 0; skip < 500; skip += pageSize)
+        {
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get,
+                    $"https://emerald.xboxservices.com/xboxcomfd/v3/gameCollection" +
+                    $"?CollectionType=MyGames&SkipItems={skip}&MaxItems={pageSize}&Filters=PcGame");
+
+                request.Headers.Add("Authorization", $"XBL3.0 x={_userHash};{_xstsToken}");
+                request.Headers.Add("x-xbl-contract-version", "4");
+                request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+
+                using (request)
+                using (var response = await _http.SendAsync(request))
+                {
+                    response.EnsureSuccessStatusCode();
+                    var json = await response.Content.ReadAsStringAsync();
+                    var collection = JsonSerializer.Deserialize<GameCollectionResponse>(json);
+                    var items = collection?.Items ?? [];
+                    var previousCount = games.Count;
+
+                    games.AddRange(items
+                        .Where(item => !string.IsNullOrWhiteSpace(item.Name))
+                        .Select(item => new XboxLibraryGame(item.TitleId, item.Name)));
+
+                    var total = collection?.TotalItemsCount ?? collection?.TotalItems;
+                    if (items.Count == 0 || games.Count == previousCount || (total.HasValue && games.Count >= total.Value))
+                        break;
+                }
+            }
+            catch
+            {
+                break;
+            }
+        }
+
+        return games
+            .DistinctBy(game => game.TitleId, StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     private async Task<int> TryGetGameCollectionCountAsync()
     {
         try

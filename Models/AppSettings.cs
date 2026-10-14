@@ -11,6 +11,7 @@ public class AppSettings
     internal static string DefaultIgdbClientSecret   => SecretsService.IgdbClientSecret;
     internal static string DefaultXboxClientId       => SecretsService.XboxClientId;
     internal static string DefaultSteamApiKey        => SecretsService.SteamApiKey;
+    internal const string DefaultSteamLibraryProxyUrl = "https://glauncher-steam-proxy.kuatps.workers.dev/";
     internal static string DefaultOpenAiApiKey       => SecretsService.OpenAiApiKey;
     internal static string DefaultGroqApiKey         => SecretsService.GroqApiKey;
 
@@ -23,6 +24,10 @@ public class AppSettings
     public string XboxClientId         { get; set; } = SecretsService.XboxClientId;
     public string SteamApiKey          { get; set; } = SecretsService.SteamApiKey;
     public string SteamId              { get; set; } = string.Empty;
+    public string SteamLibraryProxyUrl { get; set; } =
+        Environment.GetEnvironmentVariable("GLAUNCHER_STEAM_PROXY_URL") is { Length: > 0 } proxyUrl
+            ? proxyUrl
+            : DefaultSteamLibraryProxyUrl;
 
     public bool SoundEnabled           { get; set; } = true;
     public bool FpsOverlayEnabled      { get; set; } = false;

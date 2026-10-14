@@ -7,7 +7,7 @@ namespace GameLauncher.Services;
 public record SteamGridGame(int Id, string Name);
 public record SteamGridImage(string Url, string? ThumbnailUrl);
 
-public class SteamGridDbService
+public class SteamGridDbService : IDisposable
 {
     private readonly SteamGridDb _client;
     private readonly HttpClient _http = new() { Timeout = TimeSpan.FromSeconds(20) };
@@ -33,6 +33,8 @@ public class SteamGridDbService
             return [];
         }
     }
+
+    public void Dispose() => _http.Dispose();
 
     public async Task<List<SteamGridImage>> GetCoversAsync(int gameId)
     {

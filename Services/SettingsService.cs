@@ -26,6 +26,13 @@ public static class SettingsService
             }
             var json = File.ReadAllText(SettingsPath);
             Current = JsonSerializer.Deserialize<AppSettings>(json) ?? new AppSettings();
+            if (string.IsNullOrWhiteSpace(Current.SteamLibraryProxyUrl))
+            {
+                Current.SteamLibraryProxyUrl =
+                    Environment.GetEnvironmentVariable("GLAUNCHER_STEAM_PROXY_URL") is { Length: > 0 } proxyUrl
+                        ? proxyUrl
+                        : AppSettings.DefaultSteamLibraryProxyUrl;
+            }
             if (Current.SteamGridDbApiKey.StartsWith("http", StringComparison.OrdinalIgnoreCase))
                 Current.SteamGridDbApiKey = AppSettings.DefaultSteamGridDbApiKey;
 
@@ -33,6 +40,7 @@ public static class SettingsService
             Current.OpenAiApiKey      = SecretsService.Unprotect(Current.OpenAiApiKey);
             Current.GroqApiKey        = SecretsService.Unprotect(Current.GroqApiKey);
             Current.GeminiApiKey      = SecretsService.Unprotect(Current.GeminiApiKey);
+            Current.SteamApiKey       = SecretsService.Unprotect(Current.SteamApiKey);
 
             // A chave Groq embutida é apenas um valor legado/ofuscado.
             // Nunca a use como credencial padrão: solicite uma chave configurada pelo usuário.
@@ -85,8 +93,9 @@ public static class SettingsService
                 AvatarImagePath      = Current.AvatarImagePath,
                 PlayerName           = Current.PlayerName,
                 XboxClientId         = Current.XboxClientId,
-                SteamApiKey          = Current.SteamApiKey,
+                SteamApiKey          = ProtectIfCustom(Current.SteamApiKey, AppSettings.DefaultSteamApiKey),
                 SteamId              = Current.SteamId,
+                SteamLibraryProxyUrl = Current.SteamLibraryProxyUrl,
                 SoundEnabled         = Current.SoundEnabled,
                 FpsOverlayEnabled    = Current.FpsOverlayEnabled,
                 AccentColor          = Current.AccentColor,
