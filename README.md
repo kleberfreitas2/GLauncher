@@ -1,7 +1,7 @@
 <div align="center">
   <img src="Assets/icon.png" width="100" alt="GLauncher Logo"/>
 
-  # GLauncher V.2.11.5
+  # GLauncher V.2.11.4
 
   **Launcher de jogos pessoal com interface inspirada em consoles — feito com WPF e .NET 8**
 
